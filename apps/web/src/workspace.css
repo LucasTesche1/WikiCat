@@ -44,6 +44,9 @@ button:disabled { cursor: not-allowed; }
 .workspace-main { max-width: 1600px; margin: 0 auto; padding: 32px; min-width: 0; }
 .workspace-focus { grid-template-columns: minmax(0,1fr); }
 .workspace-focus > .workspace-nav { display: none; }
+.workspace-focus .workspace-header { display: none; }
+.workspace-focus .workspace-main { max-width: none; padding: clamp(16px,2vw,32px); }
+.workspace-focus .reader-grid { grid-template-columns: minmax(0,1fr) 280px; }
 .nav-row { min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; font-size: 14px; transition: background-color 140ms; }
 .nav-row:hover { background: hsl(var(--muted)); }
 .nav-row[aria-current=page] { background: hsl(var(--muted)); color: hsl(var(--primary)); box-shadow: inset 3px 0 hsl(var(--primary)); font-weight: 600; }

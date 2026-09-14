@@ -6,6 +6,60 @@ import { pageVersions, users } from '../../db/schema/index.js';
 import { requireAuth, requireRole } from '../auth/guards.js';
 import { findPageById, updatePage } from './pages.service.js';
 
+function searchTerms(query: string): string[] {
+  return Array.from(
+    new Set(
+      query
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLocaleLowerCase()
+        .split(/[^a-z0-9]+/i)
+        .map(term => term.trim())
+        .filter(term => term.length >= 2),
+    ),
+  ).slice(0, 8);
+}
+
+function readableDocumentText(markdown: string): string {
+  return markdown
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/```[\s\S]*?```/g, block => block.replace(/```[a-z0-9-]*|```/gi, ' '))
+    .replace(/!\[[^\]]*]\([^)]+\)/g, ' ')
+    .replace(/\[([^\]]+)]\([^)]+\)/g, '$1')
+    .replace(/[#*_`>|~\-[\]]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function bestSnippet(content: string, query: string, terms: string[]): { snippet: string; offset: number } {
+  const compact = readableDocumentText(content);
+  if (!terms.length) return { snippet: compact.slice(0, 260), offset: 0 };
+  const lower = compact.toLocaleLowerCase();
+  const raw = query.toLocaleLowerCase();
+  const candidates = [raw, ...terms].filter(Boolean);
+  let offset = -1;
+  for (const term of candidates) {
+    offset = lower.indexOf(term);
+    if (offset >= 0) break;
+  }
+  if (offset < 0) return { snippet: compact.slice(0, 260), offset: 0 };
+  const start = Math.max(0, offset - 80);
+  const snippet = compact.slice(start, offset + 260).replace(/\s+/g, ' ').trim();
+  return { snippet: `${start > 0 ? '… ' : ''}${snippet}${offset + 260 < content.length ? ' …' : ''}`, offset };
+}
+
+function rawMatchOffset(content: string, query: string, terms: string[]): number {
+  if (!terms.length) return 0;
+  const lower = content.toLocaleLowerCase();
+  for (const term of [query.toLocaleLowerCase(), ...terms].filter(Boolean)) {
+    const offset = lower.indexOf(term);
+    if (offset >= 0) return offset;
+  }
+  return 0;
+}
+
 export async function registerWorkspace(app: FastifyInstance) {
   app.get<{ Querystring: { q?: string; spaceSlug?: string } }>('/search', {
     onRequest: requireAuth(), schema: { querystring: Type.Object({
@@ -15,31 +69,107 @@ export async function registerWorkspace(app: FastifyInstance) {
     const start = Date.now();
     const query = request.query.q?.trim() ?? '';
     const scope = request.query.spaceSlug ?? '';
+    const normalized = query
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLocaleLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+    const slugQuery = normalized.replace(/\s+/g, '-');
     const rows = await app.sql<{
       pageId: string; title: string; spaceSlug: string; spaceName: string;
-      content: string; updatedAt: Date; updatedByName: string;
+      slug: string; content: string; updatedAt: Date; updatedByName: string; score: number;
     }[]>`
-      SELECT p.id AS "pageId", p.title, s.slug AS "spaceSlug", s.name AS "spaceName",
-        p.content_markdown AS content, p.updated_at AS "updatedAt", u.name AS "updatedByName"
-      FROM pages p JOIN spaces s ON s.id = p.space_id JOIN users u ON u.id = p.updated_by
-      WHERE p.deleted_at IS NULL AND s.deleted_at IS NULL
-        AND (${scope} = '' OR s.slug = ${scope})
-        AND (${query} = '' OR p.fts_vector @@ websearch_to_tsquery('simple', ${query})
-          OR strpos(lower(p.title), lower(${query})) > 0)
-      ORDER BY CASE WHEN ${query} = '' THEN 0 ELSE ts_rank(p.fts_vector, websearch_to_tsquery('simple', ${query})) END DESC,
-        p.updated_at DESC LIMIT 31
+      WITH input AS (
+        SELECT
+          ${query}::text AS raw,
+          lower(${query})::text AS raw_lower,
+          ${normalized}::text AS normalized,
+          ${slugQuery}::text AS slug_query,
+          CASE WHEN ${query} = '' THEN NULL ELSE websearch_to_tsquery('simple', ${query}) END AS tsq
+      ),
+      terms AS (
+        SELECT term
+        FROM input, regexp_split_to_table(input.normalized, '\\s+') AS term
+        WHERE length(term) >= 2
+        LIMIT 8
+      ),
+      scored AS (
+        SELECT
+          p.id AS "pageId",
+          p.title,
+          p.slug,
+          s.slug AS "spaceSlug",
+          s.name AS "spaceName",
+          p.content_markdown AS content,
+          p.updated_at AS "updatedAt",
+          u.name AS "updatedByName",
+          (
+            CASE WHEN input.raw = '' THEN 0 ELSE
+              CASE WHEN lower(p.title) = input.raw_lower THEN 120 ELSE 0 END +
+              CASE WHEN p.slug = input.slug_query THEN 110 ELSE 0 END +
+              CASE WHEN lower(p.title) LIKE input.raw_lower || '%' THEN 90 ELSE 0 END +
+              CASE WHEN p.slug LIKE input.slug_query || '%' THEN 82 ELSE 0 END +
+              CASE WHEN lower(p.title) LIKE '%' || input.raw_lower || '%' THEN 68 ELSE 0 END +
+              CASE WHEN p.slug LIKE '%' || input.slug_query || '%' THEN 58 ELSE 0 END +
+              CASE WHEN lower(COALESCE(p.tag_names_denorm, '')) LIKE '%' || input.raw_lower || '%' THEN 44 ELSE 0 END +
+              CASE WHEN lower(p.content_markdown) LIKE '%' || input.raw_lower || '%' THEN 30 ELSE 0 END +
+              COALESCE(ts_rank_cd(p.fts_vector, input.tsq), 0) * 36 +
+              GREATEST(similarity(lower(p.title), input.raw_lower), similarity(p.slug, input.slug_query)) * 28 +
+              (
+                SELECT COALESCE(SUM(
+                  CASE WHEN lower(p.title) LIKE '%' || term || '%' THEN 10 ELSE 0 END +
+                  CASE WHEN p.slug LIKE '%' || replace(term, ' ', '-') || '%' THEN 9 ELSE 0 END +
+                  CASE WHEN lower(COALESCE(p.tag_names_denorm, '')) LIKE '%' || term || '%' THEN 8 ELSE 0 END +
+                  CASE WHEN lower(p.content_markdown) LIKE '%' || term || '%' THEN 3 ELSE 0 END
+                ), 0)
+                FROM terms
+              )
+            END
+          )::float AS score
+        FROM pages p
+        JOIN spaces s ON s.id = p.space_id
+        JOIN users u ON u.id = p.updated_by
+        CROSS JOIN input
+        WHERE p.deleted_at IS NULL
+          AND s.deleted_at IS NULL
+          AND (${scope} = '' OR s.slug = ${scope})
+          AND (
+            input.raw = ''
+            OR p.fts_vector @@ input.tsq
+            OR lower(p.title) LIKE '%' || input.raw_lower || '%'
+            OR p.slug LIKE '%' || input.slug_query || '%'
+            OR lower(COALESCE(p.tag_names_denorm, '')) LIKE '%' || input.raw_lower || '%'
+            OR lower(p.content_markdown) LIKE '%' || input.raw_lower || '%'
+            OR EXISTS (
+              SELECT 1 FROM terms
+              WHERE lower(p.title) LIKE '%' || term || '%'
+                 OR p.slug LIKE '%' || term || '%'
+                 OR lower(COALESCE(p.tag_names_denorm, '')) LIKE '%' || term || '%'
+                 OR lower(p.content_markdown) LIKE '%' || term || '%'
+            )
+          )
+      )
+      SELECT *
+      FROM scored
+      ORDER BY
+        CASE WHEN ${query} = '' THEN 0 ELSE score END DESC,
+        "updatedAt" DESC
+      LIMIT 31
     `;
-    const terms = query.toLocaleLowerCase().split(/\s+/).filter(Boolean);
+    const terms = searchTerms(query);
     const results: WorkspaceSearchItem[] = rows.slice(0, 30).map(row => {
       const headings = parseDocument(row.content).headings;
-      const matchOffset = terms.length ? Math.max(0, row.content.toLocaleLowerCase().indexOf(terms[0]!)) : 0;
+      const { snippet } = bestSnippet(row.content, query, terms);
+      const matchOffset = rawMatchOffset(row.content, query, terms);
       const heading = [...headings].reverse().find(h => h.offset <= matchOffset);
       const titleHeading = headings.find(h => terms.length && terms.every(t => h.text.toLocaleLowerCase().includes(t)));
       const target = titleHeading ?? heading;
-      const offset = titleHeading?.offset ?? matchOffset;
       return { pageId: row.pageId, title: row.title, spaceSlug: row.spaceSlug, spaceName: row.spaceName,
-        updatedAt: row.updatedAt.toISOString(), updatedByName: row.updatedByName,
-        snippet: row.content.slice(Math.max(0, offset - 40), offset + 200).replace(/\s+/g, ' '),
+        updatedAt: new Date(row.updatedAt).toISOString(), updatedByName: row.updatedByName,
+        snippet: query
+          ? snippet || `${row.title} · ${row.slug}`
+          : readableDocumentText(row.content).slice(0, 220) || `${row.title} · ${row.slug}`,
         anchor: target?.id, sectionTitle: target?.text };
     });
     return { results, tookMs: Date.now() - start, hasMore: rows.length > 30 };

@@ -10,7 +10,17 @@ export function DocumentRelations({ markdown, title, slug, tree, pageId }: { mar
   const [selected, setSelected] = useState<string | null>(null);
   const nodes = useMemo(() => {
     const result: { id: string; title: string; relation: string; href: string }[] = [];
-    const walk = (items: PageTreeNode[]) => items.forEach(n => { if (n.id === pageId && n.parentPageId) result.push({ id: n.parentPageId, title: 'Página superior', relation: 'Pertence a', href: `/s/${slug}/p/${n.parentPageId}` }); if (n.parentPageId === pageId) result.push({ id: n.id, title: n.title, relation: 'Contém', href: `/s/${slug}/p/${n.id}` }); walk(n.children); });
+    const byId = new Map<string, PageTreeNode>();
+    const index = (items: PageTreeNode[]) => items.forEach(n => { byId.set(n.id, n); index(n.children); });
+    index(tree);
+    const walk = (items: PageTreeNode[]) => items.forEach(n => {
+      if (n.id === pageId && n.parentPageId) {
+        const parent = byId.get(n.parentPageId);
+        result.push({ id: n.parentPageId, title: parent?.title ?? 'Página superior removida', relation: 'Pertence a', href: `/s/${slug}/p/${n.parentPageId}` });
+      }
+      if (n.parentPageId === pageId) result.push({ id: n.id, title: n.title, relation: 'Contém', href: `/s/${slug}/p/${n.id}` });
+      walk(n.children);
+    });
     walk(tree);
     documentLinks(markdown).filter(url => /^\/s\/[^/]+\/p\/[\w-]+/.test(url)).forEach(url => result.push({ id: url, title: url, relation: 'Referencia', href: url }));
     return result.slice(0,200);

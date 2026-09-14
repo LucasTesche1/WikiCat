@@ -131,6 +131,7 @@ export async function registerPages(app: FastifyInstance) {
         return reply.code(404).send({ error: 'Not Found', message: 'Espaço não encontrado.' });
       }
       try {
+        if (request.body.parentPageId === '') request.body.parentPageId = null;
         const created = await createPage(
           request.server,
           request.currentUser!.id,
@@ -182,6 +183,7 @@ export async function registerPages(app: FastifyInstance) {
     },
     async (request, reply) => {
       try {
+        if (request.body.parentPageId === '') request.body.parentPageId = null;
         return await updatePage(request.server, request.currentUser!.id, request.params.id, request.body);
       } catch (err) {
         const code =
