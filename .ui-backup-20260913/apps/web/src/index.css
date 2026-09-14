@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 216 33% 97%;
+    --foreground: 222 47% 8%;
+    --muted: 216 24% 93%;
+    --muted-foreground: 218 18% 34%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 8%;
+    --border: 216 23% 84%;
+    --input: 216 23% 84%;
+    --primary: 158 72% 27%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 231 74% 55%;
+    --secondary-foreground: 0 0% 100%;
+    --accent: 216 30% 91%;
+    --accent-foreground: 222 47% 8%;
+    --destructive: 0 72% 40%;
+    --destructive-foreground: 0 0% 100%;
+    --ring: 158 72% 27%;
+    --radius: 0.625rem;
+    --sidebar: 222 47% 7%;
+    --sidebar-foreground: 215 25% 91%;
+    --sidebar-accent: 218 33% 13%;
+    --brand-pink: 263 70% 55%;
+    --brand-purple: 231 74% 57%;
+    --brand-amber: 39 92% 42%;
+    --brand-teal: 158 72% 32%;
+  }
+
+  .dark {
+    --background: 222 47% 5%;
+    --foreground: 214 32% 93%;
+    --muted: 218 33% 11%;
+    --muted-foreground: 215 17% 67%;
+    --popover: 220 39% 8%;
+    --popover-foreground: 214 32% 93%;
+    --card: 220 39% 8%;
+    --card-foreground: 214 32% 93%;
+    --border: 217 27% 17%;
+    --input: 217 27% 19%;
+    --primary: 158 64% 52%;
+    --primary-foreground: 164 86% 8%;
+    --secondary: 231 89% 70%;
+    --secondary-foreground: 232 47% 10%;
+    --accent: 217 31% 15%;
+    --accent-foreground: 214 32% 95%;
+    --destructive: 0 72% 56%;
+    --destructive-foreground: 0 0% 100%;
+    --ring: 158 64% 52%;
+    --sidebar: 222 47% 5%;
+    --sidebar-foreground: 214 32% 93%;
+    --sidebar-accent: 217 33% 12%;
+    --brand-pink: 263 85% 70%;
+    --brand-purple: 231 89% 70%;
+    --brand-amber: 43 96% 58%;
+    --brand-teal: 158 64% 52%;
+  }
+
+  * { @apply border-border; }
+  html { scroll-behavior: smooth; }
+  html, body, #root { min-height: 100%; }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: 'rlig' 1, 'calt' 1, 'ss01' 1;
+    background-image: linear-gradient(hsl(var(--border) / .14) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border) / .14) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  button, a, input, textarea { @apply ring-offset-background; }
+  :focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+  ::selection { background: hsl(var(--brand-teal) / .3); }
+}
+
+@layer components {
+  .technical-panel { @apply border border-border; background: hsl(var(--card)); box-shadow: 0 1px 0 rgb(255 255 255 / .04), 0 18px 50px -30px rgb(0 0 0 / .65); }
+  .eyebrow { @apply font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground; }
+  .metric-value { @apply font-mono text-3xl font-semibold tracking-[-0.04em] text-foreground; }
+}
+
+@layer utilities {
+  .text-gradient-brand { background: linear-gradient(100deg, hsl(var(--brand-teal)), hsl(var(--brand-purple))); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .bg-gradient-brand { background: linear-gradient(135deg, hsl(var(--brand-teal)), hsl(var(--brand-purple))); }
+  .bg-gradient-brand-soft { background: linear-gradient(135deg, hsl(var(--brand-teal) / .10), hsl(var(--brand-purple) / .08)); }
+  .bg-gradient-hero { background: linear-gradient(145deg, hsl(var(--card) / .96), hsl(var(--muted) / .72)); }
+  .bg-gradient-card { background: hsl(var(--card) / .94); }
+  .bg-gradient-sidebar-active { background: linear-gradient(90deg, hsl(var(--brand-teal) / .13), transparent); box-shadow: inset 2px 0 hsl(var(--brand-teal)); }
+  .bg-gradient-navbar { background: hsl(var(--background) / .9); backdrop-filter: blur(18px); }
+  .shadow-soft { box-shadow: 0 12px 32px -22px rgb(0 0 0 / .5); }
+  .shadow-soft-lg { box-shadow: 0 24px 70px -38px rgb(0 0 0 / .7); }
+  .shadow-glow { box-shadow: 0 0 0 1px hsl(var(--brand-teal) / .24), 0 0 28px -12px hsl(var(--brand-teal) / .55); }
+  .shadow-command { box-shadow: 0 32px 120px -24px rgb(0 0 0 / .9); }
+  .shadow-status { box-shadow: 0 0 10px hsl(var(--brand-teal)); }
+  .animate-fade-up { animation: fade-up .35s ease-out both; }
+  .animate-pulse-soft { animation: pulse-soft 2.6s ease-in-out infinite; }
+  @keyframes fade-up { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+  @keyframes pulse-soft { 0%,100% { opacity: .72; } 50% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; } }
+}
+
+.prose { color: hsl(var(--foreground)); font-size: 1rem; line-height: 1.8; max-width: 72ch; }
+.prose h1,.prose h2,.prose h3,.prose h4 { color: hsl(var(--foreground)); font-weight: 650; letter-spacing: -.025em; line-height: 1.25; }
+.prose h1 { font-size: 2.25rem; margin: 0 0 1.25rem; }
+.prose h2 { font-size: 1.5rem; margin: 2.75rem 0 1rem; padding-top: .5rem; border-top: 1px solid hsl(var(--border)); }
+.prose h3 { font-size: 1.16rem; margin: 2rem 0 .75rem; }
+.prose p,.prose ul,.prose ol { margin: 1rem 0; }
+.prose ul,.prose ol { padding-left: 1.5rem; }
+.prose ul { list-style: disc; }.prose ol { list-style: decimal; }
+.prose a { color: hsl(var(--brand-teal)); text-decoration: underline; text-underline-offset: 4px; }
+.prose blockquote { margin: 1.5rem 0; border: 1px solid hsl(var(--brand-purple) / .28); border-left: 3px solid hsl(var(--brand-purple)); border-radius: .5rem; background: hsl(var(--brand-purple) / .06); padding: 1rem 1.25rem; color: hsl(var(--muted-foreground)); }
+.prose :not(pre) > code { border: 1px solid hsl(var(--border)); border-radius: .3rem; background: hsl(var(--muted)); padding: .15rem .35rem; font-family: ui-monospace, monospace; font-size: .9em; }
+.hljs-keyword,.hljs-selector-tag { color:#c4b5fd }.hljs-string,.hljs-attr { color:#6ee7b7 }.hljs-number,.hljs-literal { color:#fbbf24 }.hljs-comment { color:#64748b;font-style:italic }.hljs-title,.hljs-function { color:#93c5fd }

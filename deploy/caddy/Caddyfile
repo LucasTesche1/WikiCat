@@ -1,0 +1,29 @@
+(_wikicat_site) {
+  encode gzip zstd
+
+  header {
+    X-Content-Type-Options nosniff
+    X-Frame-Options SAMEORIGIN
+    Referrer-Policy no-referrer-when-downgrade
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    Content-Security-Policy "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self' data:; frame-ancestors 'self'; base-uri 'self'; form-action 'self';"
+  }
+
+  reverse_proxy http://{$WIKICAT_APP_HOST}:{$WIKICAT_APP_PORT} {
+    transport http {
+      versions 1.1 2
+    }
+  }
+}
+
+http://{$WIKICAT_DOMAIN} {
+  redir https://{host}{uri} permanent
+}
+
+https://{$WIKICAT_DOMAIN} {
+  log
+  tls internal
+
+  import _wikicat_site
+}

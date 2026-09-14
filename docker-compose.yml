@@ -1,0 +1,120 @@
+---
+name: wikicat
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: wikicat-db
+    restart: unless-stopped
+    shm_size: 128m
+    environment:
+      TZ: ${TZ:-UTC}
+      POSTGRES_DB: wikicat
+      POSTGRES_USER: wikicat
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-wikicat}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - wikicat-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wikicat -d wikicat"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    networks:
+      - wikicat-net
+    security_opt:
+      - no-new-privileges:true
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILDKIT_INLINE_CACHE: "1"
+    image: wikicat-app:local
+    container_name: wikicat-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      TZ: ${TZ:-UTC}
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      LOG_LEVEL: info
+      DATABASE_URL: postgres://wikicat:${DB_PASSWORD:-wikicat}@db:5432/wikicat
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      COOKIE_SECRET: ${COOKIE_SECRET:?COOKIE_SECRET is required}
+      SESSION_MAX_AGE_SECONDS: ${SESSION_MAX_AGE_SECONDS:-604800}
+      ATTACHMENTS_DIR: /attachments
+      ATTACHMENTS_LARGE_DIR: /attachments-large
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost}
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost,https://localhost,http://localhost:5173,http://localhost:3000}
+      MAX_ATTACHMENT_STANDARD_MB: ${MAX_ATTACHMENT_STANDARD_MB:-20}
+      MAX_ATTACHMENT_LARGE_MB: ${MAX_ATTACHMENT_LARGE_MB:-2048}
+      INIT_ADMIN_EMAIL: ${INIT_ADMIN_EMAIL:-admin@example.com}
+      INIT_ADMIN_PASSWORD: ${INIT_ADMIN_PASSWORD:-ChangeMe123!}
+      INIT_ADMIN_NAME: ${INIT_ADMIN_NAME:-Administrator}
+      RUN_MIGRATIONS_ON_STARTUP: "true"
+    volumes:
+      - wikicat-attachments:/attachments
+      - wikicat-attachments-large:/attachments-large
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3000/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      - wikicat-net
+    security_opt:
+      - no-new-privileges:true
+    init: true
+
+  proxy:
+    image: caddy:2-alpine
+    container_name: wikicat-proxy
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      TZ: ${TZ:-UTC}
+      WIKICAT_DOMAIN: ${WIKICAT_DOMAIN:-localhost}
+      WIKICAT_APP_HOST: app
+      WIKICAT_APP_PORT: 3000
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - wikicat-caddy-data:/data
+      - wikicat-caddy-config:/config
+      - ./deploy/caddy/certs:/etc/caddy/certs:ro
+    networks:
+      - wikicat-net
+    security_opt:
+      - no-new-privileges:true
+    init: true
+
+volumes:
+  wikicat-db-data:
+    name: wikicat-db-data
+  wikicat-attachments:
+    name: wikicat-attachments
+  wikicat-attachments-large:
+    name: wikicat-attachments-large
+  wikicat-caddy-data:
+    name: wikicat-caddy-data
+  wikicat-caddy-config:
+    name: wikicat-caddy-config
+
+networks:
+  wikicat-net:
+    driver: bridge
+    name: wikicat-net
