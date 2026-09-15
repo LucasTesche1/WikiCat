@@ -24,7 +24,9 @@ export function WorkspaceLayout() {
       <div className="workspace-work"><Navbar spaces={spaces} onMenu={() => setDrawer(true)} />
         <main id="workspace-main" tabIndex={-1} className="workspace-main">
           {error && <div role="alert" className="mb-4 rounded-lg border border-input p-4 text-sm">Não foi possível carregar os espaços. <button className="min-h-11 underline" onClick={() => setRevision(v => v + 1)}>Tentar novamente</button></div>}
-          <Outlet />
+          <div key={location.pathname} className="route-transition min-w-0">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

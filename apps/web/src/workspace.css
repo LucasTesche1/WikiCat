@@ -5,7 +5,7 @@
   --muted: 210 40% 96%; --muted-foreground: 215 25% 27%;
   --accent: 210 40% 96%; --accent-foreground: 222 47% 11%;
   --border: 214 32% 86%; --input: 215 16% 47%;
-  --primary: 164 88% 20%; --primary-foreground: 0 0% 100%;
+  --primary: 45 96% 45%; --primary-foreground: 222 47% 8%;
   --secondary: 245 58% 41%; --secondary-foreground: 0 0% 100%;
   --destructive: 0 70% 35%; --destructive-foreground: 0 0% 100%;
   --ring: 245 58% 41%; --brand-teal: 164 88% 20%; --brand-purple: 245 58% 41%;
@@ -21,7 +21,7 @@
   --muted: 216 34% 14%; --muted-foreground: 214 32% 84%;
   --accent: 216 34% 14%; --accent-foreground: 210 40% 98%;
   --border: 215 25% 27%; --input: 215 20% 65%;
-  --primary: 156 72% 67%; --primary-foreground: 218 38% 6%;
+  --primary: 48 96% 53%; --primary-foreground: 218 38% 6%;
   --secondary: 226 100% 89%; --secondary-foreground: 218 38% 6%;
   --destructive: 0 96% 89%; --destructive-foreground: 218 38% 6%;
   --ring: 226 100% 89%; --brand-teal: 156 72% 67%; --brand-purple: 226 100% 89%;
@@ -47,13 +47,14 @@ button:disabled { cursor: not-allowed; }
 .workspace-focus .workspace-header { display: none; }
 .workspace-focus .workspace-main { max-width: none; padding: clamp(16px,2vw,32px); }
 .workspace-focus .reader-grid { grid-template-columns: minmax(0,1fr) 280px; }
-.nav-row { min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; font-size: 14px; transition: background-color 140ms; }
+.nav-row { min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; font-size: 14px; transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1); }
 .nav-row:hover { background: hsl(var(--muted)); }
 .nav-row[aria-current=page] { background: hsl(var(--muted)); color: hsl(var(--primary)); box-shadow: inset 3px 0 hsl(var(--primary)); font-weight: 600; }
 .eyebrow { font: 500 12px/1.5 ui-monospace, Consolas, monospace; letter-spacing: .12em; color: hsl(var(--muted-foreground)); }
-.technical-panel { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); box-shadow: 0 1px 2px rgb(0 0 0 / .04); }
-.workspace-icon { display: grid; place-items: center; min-width: 44px; min-height: 44px; border-radius: 8px; }
+.technical-panel { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); box-shadow: 0 1px 2px rgb(0 0 0 / .04); transition: border-color 180ms ease, box-shadow 180ms ease; }
+.workspace-icon { display: grid; place-items: center; min-width: 44px; min-height: 44px; border-radius: 8px; transition: background-color 160ms ease, color 160ms ease, transform 120ms ease; }
 .workspace-icon:hover { background: hsl(var(--muted)); }
+.workspace-icon:active { transform: scale(0.96); }
 .workspace-grid { display: grid; grid-template-columns: minmax(0,1fr) 280px; gap: 24px; }
 .reader-grid { display: grid; grid-template-columns: minmax(0,1fr) 260px; gap: 32px; align-items: start; }
 .reader-content { min-width: 0; padding: clamp(28px,4vw,56px); border: 1px solid hsl(var(--border)); border-radius: 24px; background: radial-gradient(circle at 0 0, hsl(var(--brand-teal) / .09), transparent 34%), radial-gradient(circle at 100% 0, hsl(var(--brand-purple) / .08), transparent 32%), hsl(var(--card)); box-shadow: 0 28px 90px -58px rgb(0 0 0 / .65), inset 0 1px 0 hsl(0 0% 100% / .06); }
@@ -112,6 +113,11 @@ button:disabled { cursor: not-allowed; }
 .relation-canvas { background-image: radial-gradient(hsl(var(--input) / .25) 1px,transparent 1px); background-size: 24px 24px; }
 .palette-enter { animation: palette-enter 150ms ease-out; }
 @keyframes palette-enter { from { opacity: 0; } to { opacity: 1; } }
+.route-transition { animation: route-enter 220ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes route-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 .read-progress { height: 3px; background: hsl(var(--border)); overflow: hidden; }
 .read-progress > div { height: 100%; background: hsl(var(--primary)); }
 @media(max-width:1279px) { .reader-grid { grid-template-columns: minmax(0,1fr); } .toc-panel { position: static; max-height: none; } .reader-content { grid-row: 2; } }

@@ -8,6 +8,7 @@ import type {
   PageTreeNode,
   PageWithRelations,
   CreateSpaceRequest,
+  UpdateSpaceRequest,
   CreatePageRequest,
   UpdatePageRequest,
   Attachment,
@@ -78,6 +79,10 @@ export const api = {
     create: (body: CreateSpaceRequest) => request<Space>('POST', '/spaces', { body }),
     tree: (slug: string, signal?: AbortSignal) =>
       request<PageTreeNode[]>('GET', `/spaces/${encodeURIComponent(slug)}/pages/tree`, { signal }),
+    update: (id: string, body: UpdateSpaceRequest) =>
+      request<Space>('PATCH', `/spaces/${encodeURIComponent(id)}`, { body }),
+    delete: (id: string) =>
+      request<void>('DELETE', `/spaces/${encodeURIComponent(id)}`),
     tags: {
       list: (slug: string, q?: string, signal?: AbortSignal) =>
         request<TagWithPageCount[]>(
