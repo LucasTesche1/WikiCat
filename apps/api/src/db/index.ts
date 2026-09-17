@@ -4,6 +4,7 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import type { FastifyInstance } from 'fastify';
 import fp from 'fastify-plugin';
 import * as schema from './schema/index.js';
+import { databaseUrlFromEnv, postgresOptions } from './postgres-options.js';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -16,12 +17,12 @@ type Drizzle = ReturnType<typeof drizzle<typeof schema>>;
 type Sql = ReturnType<typeof postgres>;
 
 export const registerDb = fp(async (app: FastifyInstance) => {
-  const url = app.config.DATABASE_URL;
-  const sqlClient = postgres(url, {
+  const url = databaseUrlFromEnv() ?? app.config.DATABASE_URL;
+  const sqlClient = postgres(url, postgresOptions({
     max: 20,
     idle_timeout: 20,
     connect_timeout: 10,
-  });
+  }));
   const db = drizzle(sqlClient, { schema, logger: app.config.NODE_ENV === 'development' });
   app.decorate('db', db as Drizzle);
   app.decorate('sql', sqlClient as Sql);

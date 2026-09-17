@@ -3,19 +3,34 @@ set -euo pipefail
 
 echo "[wikicat:entrypoint] Node $(node --version)"
 
-wait_for_database() {
-  if [ -z "${DATABASE_URL:-}" ]; then
-    echo "[wikicat:entrypoint] DATABASE_URL is required."
+resolve_database_url() {
+  if [ -n "${DATABASE_PRIVATE_URL:-}" ]; then
+    export DATABASE_URL="$DATABASE_PRIVATE_URL"
+    echo "[wikicat:entrypoint] Using DATABASE_PRIVATE_URL."
+  elif [ -n "${DATABASE_URL:-}" ]; then
+    echo "[wikicat:entrypoint] Using DATABASE_URL."
+  elif [ -n "${DATABASE_PUBLIC_URL:-}" ]; then
+    export DATABASE_URL="$DATABASE_PUBLIC_URL"
+    echo "[wikicat:entrypoint] Using DATABASE_PUBLIC_URL."
+  else
+    echo "[wikicat:entrypoint] No database URL set. Expected DATABASE_PRIVATE_URL, DATABASE_URL, or DATABASE_PUBLIC_URL."
     return 1
   fi
 
-  local timeout="${DB_WAIT_TIMEOUT_SECONDS:-90}"
+  node --input-type=module -e "const url = new URL(process.env.DATABASE_URL); console.log(\`[wikicat:entrypoint] Database target: \${url.protocol}//\${url.hostname}:\${url.port || '5432'}\${url.pathname}\`);"
+}
+
+wait_for_database() {
+  resolve_database_url
+
+  local timeout="${DB_WAIT_TIMEOUT_SECONDS:-180}"
   local start
+  local last_error=""
   start="$(date +%s)"
 
   echo "[wikicat:entrypoint] Waiting for database..."
   while true; do
-    if node --input-type=module -e "import postgres from 'postgres'; const sql = postgres(process.env.DATABASE_URL, { max: 1, connect_timeout: 5 }); await sql\`select 1\`; await sql.end();" >/dev/null 2>&1; then
+    if last_error="$(node --input-type=module -e "import postgres from 'postgres'; const sslMode = process.env.DB_SSL_MODE || process.env.PGSSLMODE; const opts = { max: 1, connect_timeout: 5, ...(sslMode === 'require' ? { ssl: 'require' } : {}) }; const sql = postgres(process.env.DATABASE_URL, opts); await sql\`select 1\`; await sql.end();" 2>&1 >/dev/null)"; then
       echo "[wikicat:entrypoint] Database is ready."
       return 0
     fi
@@ -24,6 +39,7 @@ wait_for_database() {
     now="$(date +%s)"
     if [ $((now - start)) -ge "$timeout" ]; then
       echo "[wikicat:entrypoint] Database did not become ready within ${timeout}s."
+      echo "[wikicat:entrypoint] Last database error: ${last_error}"
       return 1
     fi
 

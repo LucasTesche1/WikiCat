@@ -9,14 +9,18 @@ const __dirname = path.dirname(__filename);
 
 const MIGRATIONS_DIR = path.resolve(__dirname, '..', 'drizzle');
 const MIGRATIONS_TABLE = '_drizzle_migrations';
-const DB_URL = process.env.DATABASE_URL;
+const DB_URL = process.env.DATABASE_PRIVATE_URL || process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL;
 
 if (!DB_URL) {
   console.error('[wikicat:migrate] DATABASE_URL is not defined. Aborting.');
   process.exit(1);
 }
 
-const sql = postgres(DB_URL, { max: 1 });
+const sslMode = process.env.DB_SSL_MODE || process.env.PGSSLMODE;
+const sql = postgres(DB_URL, {
+  max: 1,
+  ...(sslMode === 'require' ? { ssl: 'require' as const } : {}),
+});
 
 async function ensureMigrationTable() {
   await sql.unsafe(`
