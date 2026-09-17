@@ -55,9 +55,9 @@ RUN set -eux; \
     echo "[builder] tsc root:  $TSC_BIN"; \
     echo "[builder] vite root: $VITE_BIN"; \
     cd /app/packages/shared && node "$TSC_BIN" -p tsconfig.build.json --noEmit; \
+    cd /app/packages/shared && node "$TSC_BIN" -p tsconfig.build.json; \
     cd /app/apps/api && node "$TSC_BIN" -p tsconfig.build.json --noEmit; \
     cd /app/apps/web && node "$TSC_BIN" -p tsconfig.json --noEmit; \
-    cd /app/packages/shared && node "$TSC_BIN" -p tsconfig.build.json; \
     cd /app/apps/api && node "$TSC_BIN" -p tsconfig.build.json; \
     cd /app/apps/web && node "$VITE_BIN" build; \
     cd /app && (cp apps/api/dist/db/migrate.js apps/api/dist/migrate.js 2>/dev/null || cp apps/api/dist/src/db/migrate.js apps/api/dist/migrate.js 2>/dev/null || true)
