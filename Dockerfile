@@ -68,6 +68,7 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOST=0.0.0.0
 ENV RUN_MIGRATIONS_ON_STARTUP=true
+ENV DB_WAIT_TIMEOUT_SECONDS=90
 ENV TINI_SUBREAPER=1
 RUN groupadd --gid 1001 wikicat && useradd --uid 1001 --gid wikicat --shell /bin/bash --create-home wikicat
 WORKDIR /app

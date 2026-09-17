@@ -18,7 +18,7 @@
 }
 
 http://{$WIKICAT_DOMAIN} {
-  redir https://{host}{uri} permanent
+  import _wikicat_site
 }
 
 https://{$WIKICAT_DOMAIN} {

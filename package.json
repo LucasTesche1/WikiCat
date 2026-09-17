@@ -10,6 +10,7 @@
     "lint": "pnpm -r lint",
     "dev": "pnpm -r --parallel --filter @wikicat/api --filter @wikicat/web --filter @wikicat/shared dev",
     "test": "pnpm -r test",
+    "env:validate": "node scripts/validate-env.mjs",
     "clean": "pnpm -r exec rm -rf dist node_modules"
   },
   "keywords": [
