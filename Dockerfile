@@ -23,22 +23,22 @@ COPY packages/shared/package.json ./packages/shared/package.json
 COPY apps/api/package.json ./apps/api/package.json
 COPY apps/web/package.json ./apps/web/package.json
 WORKDIR /app
-RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store,sharing=locked \
+RUN --mount=type=cache,id=cacheKey-pnpm-store,target=/root/.local/share/pnpm/store,sharing=locked \
     set -eux; \
     rm -f .npmrc; \
     printf "package-manager-strict=false\nnode-linker=hoisted\n" > .npmrc; \
-    pnpm install --ignore-scripts --no-frozen-lockfile
+    pnpm install --ignore-scripts --frozen-lockfile
 
 # ===== Stage 3: installer-prod (herda de installer-dev, remove dev deps) =====
 FROM installer-dev AS installer-prod
 ENV PNPM_HOME=/pnpm
 ENV PNPM_STORE_DIR=/root/.local/share/pnpm/store
 ENV PATH=/pnpm:$PATH
-RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store,sharing=locked \
+RUN --mount=type=cache,id=cacheKey-pnpm-store,target=/root/.local/share/pnpm/store,sharing=locked \
     set -eux; \
     rm -f .npmrc; \
     printf "package-manager-strict=false\nnode-linker=hoisted\n" > .npmrc; \
-    CI=true pnpm install --prod --ignore-scripts --no-frozen-lockfile
+    CI=true pnpm install --prod --ignore-scripts --frozen-lockfile
 
 # ===== Stage 4: builder (typechecks/builds com tsc/vite root resolvidos + cd workspace) =====
 FROM installer-dev AS builder
@@ -48,11 +48,11 @@ ENV PNPM_STORE_DIR=/root/.local/share/pnpm/store
 ENV PATH=/pnpm:$PATH
 COPY . .
 WORKDIR /app
-RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store,sharing=locked \
+RUN --mount=type=cache,id=cacheKey-pnpm-store,target=/root/.local/share/pnpm/store,sharing=locked \
     set -eux; \
     rm -f .npmrc; \
     printf "package-manager-strict=false\nnode-linker=hoisted\n" > .npmrc; \
-    CI=true pnpm install --ignore-scripts --no-frozen-lockfile; \
+    CI=true pnpm install --ignore-scripts --frozen-lockfile; \
     TSC_BIN=$(node -e "const p=require.resolve('typescript/package.json'); console.log(require('path').dirname(p)+'/bin/tsc');"); \
     VITE_BIN=$(node -e "const p=require.resolve('vite/package.json'); console.log(require('path').dirname(p)+'/bin/vite.js');"); \
     echo "[builder] tsc root:  $TSC_BIN"; \
@@ -89,7 +89,6 @@ RUN mkdir -p /app/node_modules/@wikicat \
  && chmod +x /app/entrypoint.sh \
  && mkdir -p /attachments /attachments-large \
  && chown -R wikicat:wikicat /attachments /attachments-large /app
-VOLUME ["/attachments", "/attachments-large"]
 USER wikicat
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 \
