@@ -17,12 +17,12 @@ import {
   isValidHexColor,
 } from './spaces.service.js';
 import { requireAuth, requireRole } from '../auth/guards.js';
+import { sendError } from '../../lib/http-errors.js';
 
 export async function registerSpaces(app: FastifyInstance) {
   app.get<{ Reply: SpaceSummary[] }>(
     '/spaces',
     {
-      onRequest: [requireAuth()],
       schema: {
         response: {
           200: Type.Array(
@@ -51,7 +51,6 @@ export async function registerSpaces(app: FastifyInstance) {
   app.get<{ Params: { slug: string }; Reply: SpaceType | { error: string; message: string } }>(
     '/spaces/:slug',
     {
-      onRequest: [requireAuth()],
       schema: {
         params: Type.Object({
           slug: Type.String({ minLength: 2, maxLength: 120 }),
@@ -76,7 +75,7 @@ export async function registerSpaces(app: FastifyInstance) {
     async (request, reply) => {
       const row = await findSpaceBySlug(request.server, request.params.slug);
       if (!row) {
-        return reply.code(404).send({ error: 'Not Found', message: 'Espaço não encontrado.' });
+        return reply.code(404).send({ error: 'Not Found', message: 'Space not found.' });
       }
       return {
         id: row.id,
@@ -128,25 +127,20 @@ export async function registerSpaces(app: FastifyInstance) {
       if (!isValidSlug(body.slug)) {
         return reply.code(400).send({
           error: 'Bad Request',
-          message: 'Slug inválido: letras minúsculas, números e hífens (ex: meu-espaco-123). Palavras reservadas não são permitidas.',
+          message: 'Invalid slug: lowercase letters, numbers, and hyphens (example: my-space-123). Reserved words are not allowed.',
         });
       }
       if (body.color != null && !isValidHexColor(body.color)) {
         return reply.code(400).send({
           error: 'Bad Request',
-          message: 'Cor inválida: use formato hex #RRGGBB.',
+          message: 'Invalid color: use hex format #RRGGBB.',
         });
       }
       try {
         const created = await createSpace(request.server, request.currentUser!.id, body);
         return reply.code(201).send(created);
       } catch (err) {
-        const code = (err && typeof err === 'object' && 'statusCode' in err ? Number((err as { statusCode?: unknown }).statusCode) : undefined) ?? 500;
-        const msg = (err && typeof err === 'object' && 'message' in err ? String((err as { message?: unknown }).message) : undefined) ?? 'Erro ao criar espaço.';
-        if (code === 409) {
-          return reply.code(409).send({ error: 'Conflict', message: 'Já existe espaço com este slug.' });
-        }
-        return reply.code(code >= 400 && code < 500 ? code : 500).send({ error: code >= 500 ? 'Internal Server Error' : 'Bad Request', message: msg });
+        return sendError(reply, err, 'Failed to create space.');
       }
     },
   );
@@ -192,28 +186,20 @@ export async function registerSpaces(app: FastifyInstance) {
       if (body.slug != null && !isValidSlug(body.slug)) {
         return reply.code(400).send({
           error: 'Bad Request',
-          message: 'Slug inválido: letras minúsculas, números e hífens. Palavras reservadas não são permitidas.',
+          message: 'Invalid slug: lowercase letters, numbers, and hyphens. Reserved words are not allowed.',
         });
       }
       if (body.color != null && !isValidHexColor(body.color)) {
         return reply.code(400).send({
           error: 'Bad Request',
-          message: 'Cor inválida: use formato hex #RRGGBB.',
+          message: 'Invalid color: use hex format #RRGGBB.',
         });
       }
       try {
         const updated = await updateSpace(request.server, request.params.id, body);
         return updated;
       } catch (err) {
-        const code = (err && typeof err === 'object' && 'statusCode' in err ? Number((err as { statusCode?: unknown }).statusCode) : undefined) ?? 500;
-        const msg = (err && typeof err === 'object' && 'message' in err ? String((err as { message?: unknown }).message) : undefined) ?? 'Erro ao atualizar espaço.';
-        if (code === 404) {
-          return reply.code(404).send({ error: 'Not Found', message: 'Espaço não encontrado.' });
-        }
-        if (code === 409) {
-          return reply.code(409).send({ error: 'Conflict', message: 'Já existe espaço com este slug.' });
-        }
-        return reply.code(code >= 400 && code < 500 ? code : 500).send({ error: code >= 500 ? 'Internal Server Error' : 'Bad Request', message: msg });
+        return sendError(reply, err, 'Failed to update space.');
       }
     },
   );
@@ -233,7 +219,7 @@ export async function registerSpaces(app: FastifyInstance) {
     async (request, reply) => {
       const exists = await findSpaceById(request.server, request.params.id);
       if (!exists) {
-        return reply.code(404).send({ error: 'Not Found', message: 'Espaço não encontrado.' });
+        return reply.code(404).send({ error: 'Not Found', message: 'Space not found.' });
       }
       await softDeleteSpace(request.server, request.params.id);
       return reply.code(204).send(null);

@@ -8,6 +8,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { Attachment, StorageTier } from '@wikicat/shared';
 import { attachments, pages } from '../../db/schema/index.js';
 import { findPageById } from '../pages/pages.service.js';
+import { httpError } from '../../lib/http-errors.js';
 
 export type Tier = Exclude<StorageTier, undefined>;
 
@@ -43,14 +44,11 @@ export function assertValidContentLength(
 ): number {
   const raw = req.headers['content-length'];
   if (!raw) {
-    throw Object.assign(
-      new Error('Header Content-Length é obrigatório para upload de anexos.'),
-      { statusCode: 411 as const },
-    );
+    throw httpError(411, 'Content-Length header is required for attachment uploads.');
   }
   const cl = Number(raw);
   if (!Number.isFinite(cl) || cl < 0) {
-    throw Object.assign(new Error('Content-Length inválido.'), { statusCode: 400 as const });
+    throw httpError(400, 'Invalid Content-Length.');
   }
   const maxMB: number =
     tier === 'standard'
@@ -60,9 +58,9 @@ export function assertValidContentLength(
   if (cl > maxBytes) {
     const msg =
       tier === 'standard'
-        ? `Arquivo excede ${maxMB}MB do tier standard; use modal de anexo grande.`
+        ? `File exceeds the ${maxMB} MB standard tier limit; use the large attachment dialog.`
         : `Arquivo excede ${maxMB}MB do tier large.`;
-    throw Object.assign(new Error(msg), { statusCode: 413 as const });
+    throw httpError(413, msg);
   }
   return cl;
 }
@@ -73,19 +71,13 @@ export function validateMimeOrExt(tier: Tier, mimeType: string, originalName: st
     const byPrefix = STANDARD_MIME_PREFIXES.some((p) => mime.startsWith(p));
     const byExact = STANDARD_MIME_EXACT.has(mime);
     if (!byPrefix && !byExact) {
-      throw Object.assign(
-        new Error('MIME type não permitido no tier standard (imagens, texto, pdf, json, zip, gzip).'),
-        { statusCode: 400 as const },
-      );
+      throw httpError(400, 'MIME type is not allowed in the standard tier (images, text, pdf, json, zip, gzip).');
     }
   } else {
     const ext = extFromName(originalName);
     if (!LARGE_EXT_WHITELIST.has(ext)) {
       const list = Array.from(LARGE_EXT_WHITELIST).join(', ');
-      throw Object.assign(
-        new Error(`Extensão não permitida no tier large. Permitidas: ${list}.`),
-        { statusCode: 400 as const },
-      );
+      throw httpError(400, `Extension is not allowed in the large tier. Allowed: ${list}.`);
     }
   }
 }
@@ -101,10 +93,7 @@ export function tierRootDir(app: FastifyInstance, tier: Tier): string {
 export function assertPathTierCoherence(tier: Tier, logicalPath: string): void {
   const expected = tierLogicalPrefix(tier);
   if (!logicalPath.startsWith(expected)) {
-    throw Object.assign(
-      new Error(`storage_path (${logicalPath}) não corresponde ao tier ${tier} (prefixo esperado ${expected}).`),
-      { statusCode: 500 as const },
-    );
+    throw httpError(500, `storage_path (${logicalPath}) does not match tier ${tier} (expected prefix ${expected}).`);
   }
 }
 
@@ -174,7 +163,7 @@ export async function uploadAttachment(
 ): Promise<Attachment> {
   const page = await findPageById(app, pageId);
   if (!page) {
-    throw Object.assign(new Error('Página não encontrada.'), { statusCode: 404 as const });
+    throw httpError(404, 'Page not found.');
   }
   validateMimeOrExt(tier, mimeType, originalName);
   const ext = extFromName(originalName) || '.bin';
@@ -198,10 +187,7 @@ export async function uploadAttachment(
   const sizeBytes = Number(stat.size);
   if (declaredLength > 0 && Math.abs(sizeBytes - declaredLength) > 64 * 1024) {
     try { await fsp.unlink(fullPath); } catch { /* ignore */ }
-    throw Object.assign(
-      new Error('Tamanho recebido diverge de Content-Length declarado. Upload rejeitado.'),
-      { statusCode: 400 as const },
-    );
+    throw httpError(400, 'Received size differs from declared Content-Length. Upload rejected.');
   }
   const rows = await app.db
     .insert(attachments)

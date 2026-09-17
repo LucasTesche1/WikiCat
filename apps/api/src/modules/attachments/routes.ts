@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { Type } from '@sinclair/typebox';
 import type { Attachment } from '@wikicat/shared';
 import { createReadStream } from 'node:fs';
@@ -9,10 +9,10 @@ import {
   assertValidContentLength,
   resolveFullFilesystemPath,
   assertPathTierCoherence,
-  tierLogicalPrefix,
   type Tier,
 } from './attachments.service.js';
 import { requireAuth, requireRole } from '../auth/guards.js';
+import { sendError } from '../../lib/http-errors.js';
 
 const DateSchema = Type.Unsafe<Date>({ type: 'string', format: 'date-time' });
 const ErrorResp = Type.Object({ error: Type.String(), message: Type.String() });
@@ -32,29 +32,24 @@ const AttachmentResp = Type.Object({
 
 export async function registerAttachments(app: FastifyInstance) {
   async function handleUpload(
-    req: any,
-    reply: any,
+    req: FastifyRequest<{ Params: { id: string } }>,
+    reply: FastifyReply,
     tier: Tier,
   ) {
     try {
       assertValidContentLength(app, req, tier);
     } catch (err) {
-      const code =
-        (err && typeof err === 'object' && 'statusCode' in err
-          ? Number((err as { statusCode?: unknown }).statusCode)
-          : undefined) ?? 500;
-      const msg =
-        (err && typeof err === 'object' && 'message' in err
-          ? String((err as { message?: unknown }).message)
-          : undefined) ?? 'Erro de validação de tamanho.';
-      return reply.code(code).send({ error: code >= 500 ? 'Internal Server Error' : 'Payload Too Large', message: msg });
+      return sendError(reply, err, 'Size validation error.');
     }
-    const pageId = (req.params as { id: string }).id;
+
+    const pageId = req.params.id;
     const actorId = req.currentUser!.id;
     const parts = req.parts();
+
     try {
       for await (const part of parts) {
         if (part.type !== 'file') continue;
+
         try {
           const created = await uploadAttachment(
             app,
@@ -63,31 +58,19 @@ export async function registerAttachments(app: FastifyInstance) {
             tier,
             part.file as unknown as NodeJS.ReadableStream,
             part.filename,
-            (part.mimetype || 'application/octet-stream'),
+            part.mimetype || 'application/octet-stream',
             Number(req.headers['content-length'] ?? 0),
           );
-          return reply.code(201).send(created as Attachment);
+          return reply.code(201).send(created);
         } catch (err) {
-          const code =
-            (err && typeof err === 'object' && 'statusCode' in err
-              ? Number((err as { statusCode?: unknown }).statusCode)
-              : undefined) ?? 500;
-          const msg =
-            (err && typeof err === 'object' && 'message' in err
-              ? String((err as { message?: unknown }).message)
-              : undefined) ?? 'Erro ao salvar anexo.';
-          return reply
-            .code(code >= 400 && code < 500 ? code : 500)
-            .send({ error: code >= 500 ? 'Internal Server Error' : 'Bad Request', message: msg });
+          return sendError(reply, err, 'Failed to save attachment.');
         }
       }
-      return reply.code(400).send({ error: 'Bad Request', message: 'Nenhum arquivo recebido no multipart/form-data (campo "file").' });
+
+      return reply.code(400).send({ error: 'Bad Request', message: 'No file received in multipart/form-data field "file".' });
     } catch (err) {
-      const msg =
-        (err && typeof err === 'object' && 'message' in err
-          ? String((err as { message?: unknown }).message)
-          : undefined) ?? 'Erro ao fazer upload.';
-      return reply.code(500).send({ error: 'Internal Server Error', message: msg });
+      req.server.log.warn({ err }, 'Multipart upload failed');
+      return reply.code(500).send({ error: 'Internal Server Error', message: 'An unexpected error occurred.' });
     }
   }
 
@@ -118,7 +101,6 @@ export async function registerAttachments(app: FastifyInstance) {
   app.get<{ Params: { id: string }; Reply: Attachment[] }>(
     '/pages/:id/attachments',
     {
-      onRequest: [requireAuth()],
       schema: {
         params: Type.Object({ id: Type.String() }),
         response: { 200: Type.Array(AttachmentResp) },
@@ -130,7 +112,6 @@ export async function registerAttachments(app: FastifyInstance) {
   app.get<{ Params: { id: string }; Reply: unknown }>(
     '/attachments/:id/download',
     {
-      onRequest: [requireAuth()],
       schema: {
         params: Type.Object({ id: Type.String() }),
         response: { 404: ErrorResp, 500: ErrorResp },
@@ -139,14 +120,14 @@ export async function registerAttachments(app: FastifyInstance) {
     async (req, reply) => {
       const row = await findAttachmentById(req.server, req.params.id);
       if (!row) {
-        return reply.code(404).send({ error: 'Not Found', message: 'Anexo não encontrado.' });
+        return reply.code(404).send({ error: 'Not Found', message: 'Attachment not found.' });
       }
       const tier = (row.storageTier ?? 'standard') as Tier;
       try {
         assertPathTierCoherence(tier, row.storagePath);
       } catch (err) {
-        req.server.log.error({ storagePath: row.storagePath, tier }, 'Coerência storage_path/tier quebrada para attachment');
-        return reply.code(500).send({ error: 'Internal Server Error', message: 'Anexo inconsistente (path e tier divergem). Contate o administrador.' });
+        req.server.log.error({ storagePath: row.storagePath, tier, err }, 'storage_path/tier consistency failed for attachment');
+        return reply.code(500).send({ error: 'Internal Server Error', message: 'Inconsistent attachment (path and tier do not match). Contact the administrator.' });
       }
       const full = resolveFullFilesystemPath(req.server, tier, row.storagePath);
       const safeName = encodeURIComponent(row.originalName || row.fileName);

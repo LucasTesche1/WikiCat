@@ -181,6 +181,28 @@ export type UpdatePageRequest = {
   isDraft?: boolean;
 };
 
+export interface DocumentTemplate {
+  id: string;
+  key: string;
+  title: string;
+  description: string | null;
+  contentMarkdown: string;
+  isSystem: boolean;
+  createdBy: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+}
+
+export type CreateTemplateRequest = {
+  title: string;
+  description?: string | null;
+  contentMarkdown: string;
+  key?: string;
+};
+
+export type UpdateTemplateRequest = Partial<CreateTemplateRequest>;
+
 export type UpdatePasswordRequest = {
   currentPassword: string;
   newPassword: string;

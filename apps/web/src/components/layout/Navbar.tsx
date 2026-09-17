@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { SpaceSummary } from '@wikicat/shared';
-import { Menu, Monitor, Moon, Search, Sun } from 'lucide-react';
+import { LogIn, Menu, Monitor, Moon, Search, Sun } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useThemeStore } from '../../store/useThemeStore';
 import { CommandPalette } from './CommandPalette';
@@ -18,7 +19,7 @@ export function Navbar({ spaces, onMenu }: { spaces: SpaceSummary[]; onMenu: () 
   return (
     <>
       <header className="workspace-header">
-        <button aria-label="Abrir navegação" onClick={onMenu} className="workspace-icon lg:hidden">
+        <button aria-label="Open navigation" onClick={onMenu} className="workspace-icon lg:hidden">
           <Menu size={20} />
         </button>
         <button
@@ -27,15 +28,15 @@ export function Navbar({ spaces, onMenu }: { spaces: SpaceSummary[]; onMenu: () 
           className="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-lg border border-input bg-card px-3 text-left text-sm text-muted-foreground transition-all duration-200 hover:border-primary/40 lg:max-w-[540px]"
         >
           <Search size={17} className="shrink-0" />
-          <span className="flex-1 truncate">Buscar documentação…</span>
+          <span className="flex-1 truncate">Search documents...</span>
           <kbd className="hidden rounded border border-border px-2 py-1 font-mono text-xs sm:inline">Ctrl K</kbd>
         </button>
         <span className="ml-auto hidden font-mono text-xs text-muted-foreground xl:inline">
-          SEU CONTEXTO, CONECTADO
+          TOOL CONTEXT
         </span>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="workspace-icon transition-colors hover:bg-muted" aria-label={`Tema: ${theme}`}>
+            <button className="workspace-icon transition-colors hover:bg-muted" aria-label={`Theme: ${theme}`}>
               {theme === 'dark' ? <Moon size={18} /> : theme === 'light' ? <Sun size={18} /> : <Monitor size={18} />}
             </button>
           </DropdownMenuTrigger>
@@ -43,18 +44,24 @@ export function Navbar({ spaces, onMenu }: { spaces: SpaceSummary[]; onMenu: () 
             <ThemeCard currentTheme={theme} onThemeSelect={(t) => setTheme(t)} />
           </DropdownMenuContent>
         </DropdownMenu>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="flex min-h-11 items-center rounded-lg px-1 transition-opacity hover:opacity-80" aria-label="Menu da conta">
-              <span className="grid h-9 w-9 place-items-center rounded-full border border-input bg-muted text-sm font-semibold text-foreground shadow-sm">
-                {user?.name?.slice(0, 2).toUpperCase()}
-              </span>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="p-0 border-0 bg-transparent shadow-none">
-            <AccountCard user={user ?? null} onLogout={() => void logout()} />
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex min-h-11 items-center rounded-lg px-1 transition-opacity hover:opacity-80" aria-label="Account menu">
+                <span className="grid h-9 w-9 place-items-center rounded-full border border-input bg-muted text-sm font-semibold text-foreground shadow-sm">
+                  {user.name.slice(0, 2).toUpperCase()}
+                </span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="p-0 border-0 bg-transparent shadow-none">
+              <AccountCard user={user} onLogout={() => void logout()} />
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Link to="/admin/login" state={{ redirectTo: '/' }} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-input bg-card px-3 text-sm font-medium hover:bg-muted">
+            <LogIn size={16} />Connect as Admin
+          </Link>
+        )}
       </header>
       <CommandPalette
         open={open}
@@ -65,4 +72,3 @@ export function Navbar({ spaces, onMenu }: { spaces: SpaceSummary[]; onMenu: () 
     </>
   );
 }
-

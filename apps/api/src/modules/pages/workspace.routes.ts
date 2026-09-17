@@ -62,7 +62,7 @@ function rawMatchOffset(content: string, query: string, terms: string[]): number
 
 export async function registerWorkspace(app: FastifyInstance) {
   app.get<{ Querystring: { q?: string; spaceSlug?: string } }>('/search', {
-    onRequest: requireAuth(), schema: { querystring: Type.Object({
+    schema: { querystring: Type.Object({
       q: Type.Optional(Type.String({ maxLength: 200 })), spaceSlug: Type.Optional(Type.String({ maxLength: 120 })),
     }) },
   }, async request => {
@@ -177,7 +177,7 @@ export async function registerWorkspace(app: FastifyInstance) {
   app.get<{ Params: { id: string } }>('/pages/:id/versions', {
     onRequest: requireAuth(), schema: { params: Type.Object({ id: Type.String({ format: 'uuid' }) }) },
   }, async (request, reply) => {
-    if (!await findPageById(app, request.params.id)) return reply.code(404).send({ message: 'Página não encontrada.' });
+    if (!await findPageById(app, request.params.id)) return reply.code(404).send({ message: 'Page not found.' });
     const rows = await app.db.select({ id: pageVersions.id, versionNumber: pageVersions.versionNumber,
       snapshotMarkdown: pageVersions.snapshotMarkdown, authorName: users.name, createdAt: pageVersions.createdAt,
     }).from(pageVersions).innerJoin(users, eq(users.id, pageVersions.authorId))
@@ -192,7 +192,7 @@ export async function registerWorkspace(app: FastifyInstance) {
     },
   }, async (request, reply) => {
     const [version] = await app.db.select().from(pageVersions).where(and(eq(pageVersions.id, request.body.versionId), eq(pageVersions.pageId, request.params.id)));
-    if (!version) return reply.code(404).send({ message: 'Versão não encontrada.' });
+    if (!version) return reply.code(404).send({ message: 'Version not found.' });
     return updatePage(app, request.currentUser!.id, request.params.id, {
       contentMarkdown: version.snapshotMarkdown, draftMarkdown: version.snapshotMarkdown,
       isDraft: false, expectedUpdatedAt: request.body.expectedUpdatedAt,

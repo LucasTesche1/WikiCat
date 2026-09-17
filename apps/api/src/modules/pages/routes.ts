@@ -17,6 +17,7 @@ import {
   findPageById,
 } from './pages.service.js';
 import { requireAuth, requireRole } from '../auth/guards.js';
+import { sendError } from '../../lib/http-errors.js';
 
 const ErrorResp = Type.Object({ error: Type.String(), message: Type.String() });
 const DateSchema = Type.Unsafe<Date>({ type: 'string', format: 'date-time' });
@@ -63,7 +64,6 @@ export async function registerPages(app: FastifyInstance) {
   app.get<{ Params: { slug: string }; Reply: PageTreeNode[] | { error: string; message: string } }>(
     '/spaces/:slug/pages/tree',
     {
-      onRequest: [requireAuth()],
       schema: {
         params: Type.Object({ slug: Type.String({ minLength: 2, maxLength: 120 }) }),
         response: {
@@ -75,7 +75,7 @@ export async function registerPages(app: FastifyInstance) {
     async (request, reply) => {
       const space = await findSpaceBySlug(request.server, request.params.slug);
       if (!space) {
-        return reply.code(404).send({ error: 'Not Found', message: 'Espaço não encontrado.' });
+        return reply.code(404).send({ error: 'Not Found', message: 'Space not found.' });
       }
       return buildPageTree(request.server, space.id);
     },
@@ -84,7 +84,6 @@ export async function registerPages(app: FastifyInstance) {
   app.get<{ Params: { id: string }; Reply: PageWithRelations | { error: string; message: string } }>(
     '/pages/:id',
     {
-      onRequest: [requireAuth()],
       schema: {
         params: Type.Object({ id: Type.String() }),
         response: {
@@ -96,7 +95,7 @@ export async function registerPages(app: FastifyInstance) {
     async (request, reply) => {
       const p = await getPageWithRelations(request.server, request.params.id);
       if (!p) {
-        return reply.code(404).send({ error: 'Not Found', message: 'Página não encontrada.' });
+        return reply.code(404).send({ error: 'Not Found', message: 'Page not found.' });
       }
       return p;
     },
@@ -128,7 +127,7 @@ export async function registerPages(app: FastifyInstance) {
     async (request, reply) => {
       const space = await findSpaceBySlug(request.server, request.params.slug);
       if (!space) {
-        return reply.code(404).send({ error: 'Not Found', message: 'Espaço não encontrado.' });
+        return reply.code(404).send({ error: 'Not Found', message: 'Space not found.' });
       }
       try {
         if (request.body.parentPageId === '') request.body.parentPageId = null;
@@ -140,17 +139,7 @@ export async function registerPages(app: FastifyInstance) {
         );
         return reply.code(201).send(created);
       } catch (err) {
-        const code =
-          (err && typeof err === 'object' && 'statusCode' in err
-            ? Number((err as { statusCode?: unknown }).statusCode)
-            : undefined) ?? 500;
-        const msg =
-          (err && typeof err === 'object' && 'message' in err
-            ? String((err as { message?: unknown }).message)
-            : undefined) ?? 'Erro ao criar página.';
-        return reply
-          .code(code >= 400 && code < 500 ? code : 500)
-          .send({ error: code >= 500 ? 'Internal Server Error' : 'Bad Request', message: msg });
+        return sendError(reply, err, 'Failed to create page.');
       }
     },
   );
@@ -186,20 +175,7 @@ export async function registerPages(app: FastifyInstance) {
         if (request.body.parentPageId === '') request.body.parentPageId = null;
         return await updatePage(request.server, request.currentUser!.id, request.params.id, request.body);
       } catch (err) {
-        const code =
-          (err && typeof err === 'object' && 'statusCode' in err
-            ? Number((err as { statusCode?: unknown }).statusCode)
-            : undefined) ?? 500;
-        const msg =
-          (err && typeof err === 'object' && 'message' in err
-            ? String((err as { message?: unknown }).message)
-            : undefined) ?? 'Erro ao atualizar página.';
-        if (code === 404) {
-          return reply.code(404).send({ error: 'Not Found', message: 'Página não encontrada.' });
-        }
-        return reply
-          .code(code >= 400 && code < 500 ? code : 500)
-          .send({ error: code >= 500 ? 'Internal Server Error' : 'Bad Request', message: msg });
+        return sendError(reply, err, 'Failed to update page.');
       }
     },
   );
@@ -219,7 +195,7 @@ export async function registerPages(app: FastifyInstance) {
     async (request, reply) => {
       const exists = await findPageById(request.server, request.params.id);
       if (!exists) {
-        return reply.code(404).send({ error: 'Not Found', message: 'Página não encontrada.' });
+        return reply.code(404).send({ error: 'Not Found', message: 'Page not found.' });
       }
       await softDeletePage(request.server, request.params.id);
       return reply.code(204).send(null);

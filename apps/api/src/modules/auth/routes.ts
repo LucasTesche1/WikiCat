@@ -65,7 +65,7 @@ export async function registerAuth(app: FastifyInstance) {
       if (!userOk || !pwOk) {
         return reply.code(401).send({
           error: 'Unauthorized',
-          message: 'Credenciais inválidas.',
+          message: 'Invalid credentials.',
         });
       }
       const jti = generateJti();
@@ -125,7 +125,7 @@ export async function registerAuth(app: FastifyInstance) {
         return reply.code(400).send({
           error: 'Bad Request',
           message:
-            'Senha fraca: use pelo menos 10 caracteres, 1 maiúscula e 1 número.',
+            'Weak password: use at least 10 characters, 1 uppercase letter, and 1 number.',
         });
       }
       const email = body.email.trim().toLowerCase();
@@ -133,7 +133,7 @@ export async function registerAuth(app: FastifyInstance) {
       if (already) {
         return reply.code(409).send({
           error: 'Conflict',
-          message: 'Já existe usuário com este e-mail.',
+          message: 'A user with this email already exists.',
         });
       }
       const created = await createUser(app, {
@@ -216,13 +216,13 @@ export async function registerAuth(app: FastifyInstance) {
       if (!row || !verifyPassword(body.currentPassword, row.passwordHash)) {
         return reply.code(400).send({
           error: 'Bad Request',
-          message: 'Senha atual incorreta.',
+          message: 'Current password is incorrect.',
         });
       }
       if (!isPasswordStrong(body.newPassword)) {
         return reply.code(400).send({
           error: 'Bad Request',
-          message: 'Nova senha fraca (mín. 10 caracteres, maiúscula e número).',
+          message: 'New password is weak (minimum 10 characters, uppercase letter, and number).',
         });
       }
       const hash = hashPassword(body.newPassword);

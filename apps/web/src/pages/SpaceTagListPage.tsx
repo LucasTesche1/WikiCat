@@ -33,7 +33,7 @@ export default function SpaceTagListPage() {
       })
       .catch((e: unknown) => {
         if (ac.signal.aborted) return;
-        setErr(e instanceof ApiError ? e.message : 'Erro ao carregar tags.');
+        setErr(e instanceof ApiError ? e.message : 'Failed to load tags.');
       })
       .finally(() => {
         if (!ac.signal.aborted) setLoading(false);
@@ -43,25 +43,25 @@ export default function SpaceTagListPage() {
 
   const currentTag = useMemo(() => {
     if (!tagFilter) return null;
-    return tags.find((t) => t.name.toLowerCase() === tagFilter.toLowerCase()) ?? null;
+    return tags.find(t => t.name.toLowerCase() === tagFilter.toLowerCase()) ?? null;
   }, [tags, tagFilter]);
 
   const filteredPages = useMemo(() => {
     if (!search.trim()) return pages;
     const q = search.trim().toLowerCase();
     return pages.filter(
-      (p) =>
+      p =>
         p.title.toLowerCase().includes(q) ||
-        p.tags.some((t) => t.name.toLowerCase().includes(q)) ||
+        p.tags.some(t => t.name.toLowerCase().includes(q)) ||
         p.updatedByName.toLowerCase().includes(q),
     );
   }, [pages, search]);
 
   return (
     <div className="space-y-6 pb-12">
-      <nav aria-label="Navegacao do espaco" className="flex flex-wrap items-center gap-2">
+      <nav aria-label="Space navigation" className="flex flex-wrap items-center gap-2">
         <Button asChild variant="ghost" size="sm">
-          <Link to={`/s/${slug}`}><ArrowLeft className="h-4 w-4" />Voltar ao espaco</Link>
+          <Link to={`/s/${slug}`}><ArrowLeft className="h-4 w-4" />Back to space</Link>
         </Button>
       </nav>
 
@@ -70,9 +70,9 @@ export default function SpaceTagListPage() {
           <Tag className="h-4 w-4" />
           Tags
         </div>
-        <h1 className="text-3xl font-semibold tracking-tight">Tags do espaco</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Space tags</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-          Use tags para encontrar documentos por tecnologia, processo ou area responsavel.
+          Filter pages by technology, process, owner, or operating context.
         </p>
       </header>
 
@@ -86,27 +86,17 @@ export default function SpaceTagListPage() {
         <aside className="space-y-4">
           <Card>
             <CardContent className="space-y-3 pt-4">
-              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Filtrar
-              </div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Filter</div>
               {loading && tags.length === 0 ? (
                 <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Carregando...
+                  <Loader2 className="h-4 w-4 animate-spin" /> Loading...
                 </div>
               ) : tags.length === 0 ? (
-                <div className="py-2 text-sm text-muted-foreground">
-                  Nenhuma tag criada ainda.
-                </div>
+                <div className="py-2 text-sm text-muted-foreground">No tags created yet.</div>
               ) : (
                 <div className="flex flex-wrap gap-2">
-                  <Chip
-                    label="Todas"
-                    color="#64748b"
-                    size="sm"
-                    className={!tagFilter ? 'ring-2 ring-ring' : ''}
-                    onClick={() => navigate(`/s/${slug}/tags`)}
-                  />
-                  {tags.map((t) => {
+                  <Chip label="All" color="#64748b" size="sm" className={!tagFilter ? 'ring-2 ring-ring' : ''} onClick={() => navigate(`/s/${slug}/tags`)} />
+                  {tags.map(t => {
                     const active = tagFilter && t.name.toLowerCase() === tagFilter.toLowerCase();
                     return (
                       <Chip
@@ -131,43 +121,32 @@ export default function SpaceTagListPage() {
               <div className="flex items-center gap-3">
                 <Chip label={currentTag.name} color={currentTag.color} size="md" />
                 <span className="text-sm text-muted-foreground">
-                  {currentTag.pageCount} {currentTag.pageCount === 1 ? 'pagina' : 'paginas'}
+                  {currentTag.pageCount} {currentTag.pageCount === 1 ? 'page' : 'pages'}
                 </span>
               </div>
             ) : (
-              <div className="text-sm text-muted-foreground">
-                Selecione uma tag para ver as paginas associadas.
-              </div>
+              <div className="text-sm text-muted-foreground">Select a tag to view associated pages.</div>
             )}
             <div className="relative ml-auto w-full md:w-80">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar nesta lista..."
-                className="pl-10"
-              />
+              <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search this list..." className="pl-10" />
             </div>
           </div>
 
           {loading && !currentTag ? (
             <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Carregando paginas...
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading pages...
             </div>
           ) : filteredPages.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center">
-                <div className="text-sm font-medium">
-                  {currentTag ? 'Nenhuma pagina possui esta tag.' : 'Nenhuma pagina encontrada.'}
-                </div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  Abra uma pagina para adicionar ou remover tags.
-                </div>
+                <div className="text-sm font-medium">{currentTag ? 'No page has this tag.' : 'No page found.'}</div>
+                <div className="mt-1 text-xs text-muted-foreground">Open a page to add or remove tags.</div>
               </CardContent>
             </Card>
           ) : (
             <ul className="divide-y divide-border rounded-lg border border-border bg-card text-card-foreground">
-              {filteredPages.map((p) => (
+              {filteredPages.map(p => (
                 <li key={p.id}>
                   <div className="grid gap-3 px-4 py-3 transition hover:bg-accent/60 md:grid-cols-[minmax(0,1fr)_auto]">
                     <div className="min-w-0 space-y-2">
@@ -175,32 +154,23 @@ export default function SpaceTagListPage() {
                         {p.title}
                       </Link>
                       <div className="flex flex-wrap gap-1.5">
-                        {p.tags.slice(0, 6).map((t) => (
-                          <Chip
-                            key={t.id}
-                            label={t.name}
-                            color={t.color}
-                            size="sm"
-                            onClick={() => navigate(`/s/${slug}/tag/${encodeURIComponent(t.name)}`)}
-                          />
+                        {p.tags.slice(0, 6).map(t => (
+                          <Chip key={t.id} label={t.name} color={t.color} size="sm" onClick={() => navigate(`/s/${slug}/tag/${encodeURIComponent(t.name)}`)} />
                         ))}
-                        {p.tags.length > 6 && (
-                          <span className="self-center px-1 text-xs text-muted-foreground">
-                            +{p.tags.length - 6}
-                          </span>
-                        )}
+                        {p.tags.length > 6 && <span className="self-center px-1 text-xs text-muted-foreground">+{p.tags.length - 6}</span>}
                       </div>
                     </div>
                     <div className="shrink-0 space-y-1 text-sm text-muted-foreground md:text-right">
                       <div className="flex items-center gap-1 md:justify-end">
                         <Clock className="h-4 w-4" />
-                        {new Date(p.updatedAt as unknown as string).toLocaleString('pt-BR', {
-                          day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+                        {new Date(p.updatedAt as unknown as string).toLocaleString('en-US', {
+                          day: '2-digit',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
                         })}
                       </div>
-                      <div className="truncate md:max-w-[180px]" title={p.updatedByName}>
-                        por {p.updatedByName}
-                      </div>
+                      <div className="truncate md:max-w-[180px]" title={p.updatedByName}>by {p.updatedByName}</div>
                     </div>
                   </div>
                 </li>

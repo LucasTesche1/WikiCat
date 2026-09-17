@@ -83,7 +83,7 @@ Opaque sRGB values below are designed for ≥7:1 normal-text contrast across can
 | `emerald` | `#065f46` | `#6ee7b7` | Active route, link, verified success |
 | `indigo` | `#3730a3` | `#c7d2fe` | Relationships, functions |
 | `violet` | `#5b21b6` | `#ddd6fe` | Architecture, syntax keywords |
-| `warning` | `#78350f` | `#fde68a` | Caution text/icon |
+| `warning` | `#806600` | `#ffcc00` | Caution text/icon |
 | `danger` | `#991b1b` | `#fecaca` | Errors, removed-line markers |
 | `action-bg` | `#065f46` | `#6ee7b7` | Solid primary action |
 | `action-text` | `#ffffff` | `#090d14` | Primary action label |

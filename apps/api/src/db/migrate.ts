@@ -12,7 +12,7 @@ const MIGRATIONS_TABLE = '_drizzle_migrations';
 const DB_URL = process.env.DATABASE_URL;
 
 if (!DB_URL) {
-  console.error('[wikicat:migrate] DATABASE_URL não definida. Abortando.');
+  console.error('[wikicat:migrate] DATABASE_URL is not defined. Aborting.');
   process.exit(1);
 }
 
@@ -58,14 +58,14 @@ async function main() {
     let count = 0;
     for (const file of files) {
       if (applied.has(file)) {
-        console.log(`[wikicat:migrate] Pulando ${file} (já aplicada).`);
+        console.log(`[wikicat:migrate] Skipping ${file} (already applied).`);
         continue;
       }
       const content = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf-8');
       await applyMigration(file, content);
       count += 1;
     }
-    console.log(`[wikicat:migrate] Concluído. ${count} migration(s) aplicadas.`);
+    console.log(`[wikicat:migrate] Done. ${count} migration(s) applied.`);
   } catch (err) {
     console.error('[wikicat:migrate] Fatal error:', err);
     process.exit(1);

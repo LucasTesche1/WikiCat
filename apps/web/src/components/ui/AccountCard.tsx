@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { LogOut, ShieldCheck, User as UserIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from './Button';
@@ -28,7 +28,7 @@ export function AccountCard({ user, onLogout, className, ...props }: AccountCard
   return (
     <div
       role="region"
-      aria-label="Informações da conta"
+      aria-label="Account information"
       className={cn(
         'w-72 rounded-xl border border-border bg-card p-4 text-card-foreground shadow-soft-lg',
         'backdrop-blur-none transition-shadow',
@@ -43,7 +43,7 @@ export function AccountCard({ user, onLogout, className, ...props }: AccountCard
           </span>
           <span
             className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card bg-emerald-500"
-            title="Sessão ativa"
+            title="Active session"
           />
         </div>
         <div className="min-w-0 flex-1">
@@ -71,7 +71,7 @@ export function AccountCard({ user, onLogout, className, ...props }: AccountCard
           className="w-full justify-start gap-2 border-destructive/20 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40"
         >
           <LogOut size={14} />
-          Sair da conta
+          Sign out
         </Button>
       </div>
     </div>

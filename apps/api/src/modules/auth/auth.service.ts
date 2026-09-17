@@ -68,7 +68,7 @@ export async function ensureInitialAdmin(app: FastifyInstance): Promise<void> {
   const { INIT_ADMIN_EMAIL, INIT_ADMIN_PASSWORD, INIT_ADMIN_NAME } = app.config;
   if (!INIT_ADMIN_EMAIL || !INIT_ADMIN_PASSWORD) {
     app.log.warn(
-      'INIT_ADMIN_EMAIL / INIT_ADMIN_PASSWORD não configurados — seed de admin inicial ignorado.',
+      'INIT_ADMIN_EMAIL / INIT_ADMIN_PASSWORD are not configured; initial admin seed skipped.',
     );
     return;
   }
@@ -81,7 +81,7 @@ export async function ensureInitialAdmin(app: FastifyInstance): Promise<void> {
     passwordHash: pwHash,
     role: 'admin',
   });
-  app.log.info(`Seed: usuário admin inicial criado (${INIT_ADMIN_EMAIL}).`);
+  app.log.info(`Seed: initial admin user created (${INIT_ADMIN_EMAIL}).`);
 }
 
 export async function createUser(

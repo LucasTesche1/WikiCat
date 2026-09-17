@@ -10,6 +10,7 @@ import type {
 import { tags, pageTags, pages, users, spaces } from '../../db/schema/index.js';
 import { findPageById } from '../pages/pages.service.js';
 import { findSpaceBySlug } from '../spaces/spaces.service.js';
+import { httpError } from '../../lib/http-errors.js';
 
 export type TagRow = typeof tags.$inferSelect;
 export type PageTagRow = typeof pageTags.$inferSelect;
@@ -19,7 +20,7 @@ const HEX_REGEX = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
 
 const PALETTE_HSL = [
   '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e',
-  '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e',
+  '#f97316', '#ffcc00', '#d6a800', '#84cc16', '#22c55e',
   '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6',
 ];
 
@@ -39,7 +40,7 @@ export function randomTagColor(seed?: string): string {
 export function normalizeTagName(name: string): { name: string } {
   const trimmed = name.trim().replace(/\s+/g, ' ');
   if (!NAME_REGEX.test(trimmed)) {
-    throw Object.assign(new Error(`Nome de tag inválido: use 2-64 caracteres, letras, números, espaço, - e _`), { statusCode: 400 });
+    throw httpError(400, `Invalid tag name: use 2-64 characters, letters, numbers, spaces, - and _`);
   }
   return { name: trimmed };
 }
@@ -47,7 +48,7 @@ export function normalizeTagName(name: string): { name: string } {
 export function validateColor(color: string | undefined): string | null {
   if (!color) return null;
   if (!HEX_REGEX.test(color)) {
-    throw Object.assign(new Error('Cor inválida: use formato #RGB ou #RRGGBB'), { statusCode: 400 });
+    throw httpError(400, 'Invalid color: use #RGB or #RRGGBB format');
   }
   return color;
 }
@@ -198,7 +199,7 @@ export async function getOrCreateTagInSpace(
   if (created) return created as TagRow;
 
   const fallback = await findTagByNameInSpace(app, spaceId, name, false);
-  if (!fallback) throw Object.assign(new Error('Falha ao criar tag'), { statusCode: 500 });
+  if (!fallback) throw httpError(500, 'Failed to create tag');
   return fallback;
 }
 
@@ -219,10 +220,10 @@ export async function removeTagFromPageByName(
   tagName: string,
 ): Promise<void> {
   const page = await findPageById(app, pageId);
-  if (!page) throw Object.assign(new Error('Página não encontrada'), { statusCode: 404 });
+  if (!page) throw httpError(404, 'Page not found');
 
   const tag = await findTagByNameInSpace(app, page.spaceId, tagName);
-  if (!tag) throw Object.assign(new Error('Tag não encontrada'), { statusCode: 404 });
+  if (!tag) throw httpError(404, 'Tag not found');
 
   await app.db.delete(pageTags).where(and(eq(pageTags.pageId, pageId), eq(pageTags.tagId, tag.id)));
 
@@ -242,7 +243,7 @@ export async function listPagesByTagInSpace(
   tagName: string,
 ): Promise<TaggedPage[]> {
   const space = await findSpaceBySlug(app, spaceSlug);
-  if (!space) throw Object.assign(new Error('Espaço não encontrado'), { statusCode: 404 });
+  if (!space) throw httpError(404, 'Space not found');
   const tag = await findTagByNameInSpace(app, space.id, tagName);
   if (!tag) return [];
 

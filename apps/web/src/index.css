@@ -14,7 +14,7 @@
     --card-foreground: 222 47% 8%;
     --border: 216 23% 84%;
     --input: 216 23% 84%;
-    --primary: 45 96% 45%;
+    --primary: 48 100% 50%;
     --primary-foreground: 222 47% 8%;
     --secondary: 231 74% 55%;
     --secondary-foreground: 0 0% 100%;
@@ -22,14 +22,14 @@
     --accent-foreground: 222 47% 8%;
     --destructive: 0 72% 40%;
     --destructive-foreground: 0 0% 100%;
-    --ring: 45 96% 45%;
+    --ring: 48 100% 50%;
     --radius: 0.625rem;
     --sidebar: 222 47% 7%;
     --sidebar-foreground: 215 25% 91%;
     --sidebar-accent: 218 33% 13%;
     --brand-pink: 263 70% 55%;
     --brand-purple: 231 74% 57%;
-    --brand-amber: 39 92% 42%;
+    --brand-amber: 48 100% 50%;
     --brand-teal: 158 72% 32%;
   }
 
@@ -44,7 +44,7 @@
     --card-foreground: 214 32% 93%;
     --border: 217 27% 17%;
     --input: 217 27% 19%;
-    --primary: 48 96% 53%;
+    --primary: 48 100% 50%;
     --primary-foreground: 218 38% 6%;
     --secondary: 231 89% 70%;
     --secondary-foreground: 232 47% 10%;
@@ -52,13 +52,13 @@
     --accent-foreground: 214 32% 95%;
     --destructive: 0 72% 56%;
     --destructive-foreground: 0 0% 100%;
-    --ring: 48 96% 53%;
+    --ring: 48 100% 50%;
     --sidebar: 222 47% 5%;
     --sidebar-foreground: 214 32% 93%;
     --sidebar-accent: 217 33% 12%;
     --brand-pink: 263 85% 70%;
     --brand-purple: 231 89% 70%;
-    --brand-amber: 43 96% 58%;
+    --brand-amber: 48 100% 50%;
     --brand-teal: 158 64% 52%;
   }
 
@@ -113,4 +113,4 @@
 .prose a { color: hsl(var(--brand-teal)); text-decoration: underline; text-underline-offset: 4px; }
 .prose blockquote { margin: 1.5rem 0; border: 1px solid hsl(var(--brand-purple) / .28); border-left: 3px solid hsl(var(--brand-purple)); border-radius: .5rem; background: hsl(var(--brand-purple) / .06); padding: 1rem 1.25rem; color: hsl(var(--muted-foreground)); }
 .prose :not(pre) > code { border: 1px solid hsl(var(--border)); border-radius: .3rem; background: hsl(var(--muted)); padding: .15rem .35rem; font-family: ui-monospace, monospace; font-size: .9em; }
-.hljs-keyword,.hljs-selector-tag { color:#c4b5fd }.hljs-string,.hljs-attr { color:#6ee7b7 }.hljs-number,.hljs-literal { color:#fbbf24 }.hljs-comment { color:#64748b;font-style:italic }.hljs-title,.hljs-function { color:#93c5fd }
+.hljs-keyword,.hljs-selector-tag { color:#c4b5fd }.hljs-string,.hljs-attr { color:#6ee7b7 }.hljs-number,.hljs-literal { color:#ffcc00 }.hljs-comment { color:#64748b;font-style:italic }.hljs-title,.hljs-function { color:#93c5fd }

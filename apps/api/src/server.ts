@@ -15,7 +15,9 @@ import { registerPages } from './modules/pages/routes.js';
 import { registerAttachments } from './modules/attachments/routes.js';
 import { registerTags } from './modules/tags/routes.js';
 import { registerWorkspace } from './modules/pages/workspace.routes.js';
+import { registerTemplates } from './modules/templates/routes.js';
 import type { HealthStatus } from '@wikicat/shared';
+import { errorDetails } from './lib/http-errors.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -96,6 +98,7 @@ export function createApp() {
   app.register(registerAttachments, { prefix: '/api' });
   app.register(registerTags, { prefix: '/api' });
   app.register(registerWorkspace, { prefix: '/api' });
+  app.register(registerTemplates, { prefix: '/api' });
 
   app.get('/health', async (): Promise<HealthStatus> => ({
     status: 'ok',
@@ -115,13 +118,11 @@ export function createApp() {
   });
 
   app.setErrorHandler((err: unknown, _request, reply) => {
-    const status = (err && typeof err === 'object' && 'statusCode' in err ? Number((err as { statusCode?: unknown }).statusCode) : undefined) ?? 500;
-    const name = (err && typeof err === 'object' && 'name' in err ? String((err as { name?: unknown }).name) : undefined) ?? 'Error';
-    const message = (err && typeof err === 'object' && 'message' in err ? String((err as { message?: unknown }).message) : undefined) ?? 'Ocorreu um erro inesperado.';
-    app.log.warn({ err, status }, 'HTTP error');
-    reply.status(status).send({
-      error: status >= 500 ? 'Internal Server Error' : name,
-      message: status >= 500 ? 'Ocorreu um erro inesperado.' : message,
+    const details = errorDetails(err, 'An unexpected error occurred.');
+    app.log.warn({ err, status: details.statusCode }, 'HTTP error');
+    reply.status(details.statusCode).send({
+      error: details.statusCode >= 500 ? 'Internal Server Error' : details.error,
+      message: details.statusCode >= 500 ? 'An unexpected error occurred.' : details.message,
     });
   });
 

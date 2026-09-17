@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+﻿import { create } from 'zustand';
 import type { AuthMeResponse, UserRole } from '@wikicat/shared';
 import { api, ApiError } from '../api/client';
 
@@ -35,7 +35,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const res = await api.auth.login({ email, password });
       set({ user: res.user, isLoading: false });
     } catch (err: unknown) {
-      const msg = err instanceof ApiError ? err.message : 'Falha no login.';
+      const msg = err instanceof ApiError ? err.message : 'Sign-in failed.';
       set({ error: msg, isLoading: false });
       throw err;
     }

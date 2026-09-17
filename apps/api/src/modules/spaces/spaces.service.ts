@@ -2,6 +2,7 @@ import { eq, isNull, and, count, desc, ne } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import type { CreateSpaceRequest, UpdateSpaceRequest, SpaceSummary, Space } from '@wikicat/shared';
 import { spaces, pages } from '../../db/schema/index.js';
+import { httpError } from '../../lib/http-errors.js';
 
 export type SpaceRow = typeof spaces.$inferSelect;
 
@@ -110,10 +111,7 @@ export async function createSpace(
 ): Promise<Space> {
   const existing = await findSpaceBySlug(app, input.slug);
   if (existing) {
-    const err: Error & { statusCode?: number; conflict?: boolean } = new Error('slug already exists');
-    err.statusCode = 409;
-    err.conflict = true;
-    throw err;
+    throw httpError(409, 'A space with this slug already exists.');
   }
   const rows = await app.db
     .insert(spaces)
@@ -136,9 +134,7 @@ export async function updateSpace(
 ): Promise<Space> {
   const current = await findSpaceById(app, id);
   if (!current) {
-    const err: Error & { statusCode?: number } = new Error('space not found');
-    err.statusCode = 404;
-    throw err;
+    throw httpError(404, 'Space not found.');
   }
   if (input.slug != null && input.slug !== current.slug) {
     const rows = await app.db
@@ -147,9 +143,7 @@ export async function updateSpace(
       .where(and(eq(spaces.slug, input.slug), isNull(spaces.deletedAt)))
       .limit(1);
     if (rows.length > 0 && rows[0]!.id !== id) {
-      const err: Error & { statusCode?: number } = new Error('slug already in use');
-      err.statusCode = 409;
-      throw err;
+      throw httpError(409, 'A space with this slug already exists.');
     }
   }
   const updatedRows = await app.db

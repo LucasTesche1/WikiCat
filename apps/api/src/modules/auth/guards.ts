@@ -11,15 +11,15 @@ export function requireAuth(): onRequestAsyncHookHandler {
         jti?: string;
       };
       if (!payload.sub || !payload.jti) {
-        return reply.code(401).send({ error: 'Unauthorized', message: 'Token inválido.' });
+        return reply.code(401).send({ error: 'Unauthorized', message: 'Invalid token.' });
       }
       const revoked = await isAuthTokenRevoked(request.server, payload.jti);
       if (revoked) {
-        return reply.code(401).send({ error: 'Unauthorized', message: 'Sessão revogada. Faça login novamente.' });
+        return reply.code(401).send({ error: 'Unauthorized', message: 'Session revoked. Sign in again.' });
       }
       const user = await findUserById(request.server, payload.sub);
       if (!user) {
-        return reply.code(401).send({ error: 'Unauthorized', message: 'Usuário não encontrado.' });
+        return reply.code(401).send({ error: 'Unauthorized', message: 'User not found.' });
       }
       const sessionUser: SessionUser = {
         id: user.id,
@@ -31,7 +31,7 @@ export function requireAuth(): onRequestAsyncHookHandler {
       };
       request.currentUser = sessionUser;
     } catch {
-      return reply.code(401).send({ error: 'Unauthorized', message: 'Autenticação requerida.' });
+      return reply.code(401).send({ error: 'Unauthorized', message: 'Authentication required.' });
     }
   };
 }
@@ -39,12 +39,12 @@ export function requireAuth(): onRequestAsyncHookHandler {
 export function requireRole(roles: UserRole[]): onRequestAsyncHookHandler {
   return async (request, reply) => {
     if (!request.currentUser) {
-      return reply.code(401).send({ error: 'Unauthorized', message: 'Autenticação requerida.' });
+      return reply.code(401).send({ error: 'Unauthorized', message: 'Authentication required.' });
     }
     if (!isAllowedRole(request.currentUser.role, roles)) {
       return reply.code(403).send({
         error: 'Forbidden',
-        message: `Permissão insuficiente. Papel necessário: ${roles.join(', ')}.`,
+        message: `Insufficient permission. Required role: ${roles.join(', ')}.`,
       });
     }
   };

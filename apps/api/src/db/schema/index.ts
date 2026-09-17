@@ -179,6 +179,26 @@ export const pageVersions = pgTable(
   }),
 );
 
+export const documentTemplates = pgTable(
+  'document_templates',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    key: varchar('key', { length: 120 }).notNull(),
+    title: varchar('title', { length: 160 }).notNull(),
+    description: text('description'),
+    contentMarkdown: text('content_markdown').notNull(),
+    isSystem: boolean('is_system').notNull().default(false),
+    createdBy: uuid('created_by').references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  },
+  (t) => ({
+    documentTemplatesKeyUnq: uniqueIndex('document_templates_key_unq').on(t.key).where(sql`${t.deletedAt} IS NULL`),
+    documentTemplatesTitleUnq: uniqueIndex('document_templates_title_unq').on(sql`lower(${t.title})`).where(sql`${t.deletedAt} IS NULL`),
+  }),
+);
+
 export const attachments = pgTable(
   'attachments',
   {

@@ -20,7 +20,7 @@ WikiCat is an engineering operations surface, not a generic company portal. The 
 | Terminal emerald | `hsl(158 72% 27%)` | `hsl(158 64% 52%)` | Healthy, active, primary |
 | System indigo | `hsl(231 74% 55%)` | `hsl(231 89% 70%)` | Graphs, relationships |
 | Neon violet | `hsl(263 70% 55%)` | `hsl(263 85% 70%)` | AI, architecture |
-| Alert amber | `hsl(39 92% 42%)` | `hsl(43 96% 58%)` | Review, warnings |
+| Signal gold | `hsl(48 100% 50%)` | `hsl(48 100% 50%)` | Review, warnings |
 
 Typography uses `Inter`/system sans for reading and `JetBrains Mono`/system mono for paths, shortcuts, statuses, timestamps, and technical parameters. Body copy is 16 px with a 1.8 line-height and a maximum width of 72 characters. Frequently used labels remain 14 px or larger; 10–12 px is restricted to secondary metadata.
 
@@ -30,7 +30,7 @@ Spacing follows a 4 px base: `4, 8, 12, 16, 20, 24, 32, 40, 48, 64`. The default
 
 - **Command palette:** Radix dialog, global `Ctrl/Cmd+K`, search/AI modes switched with `Tab`, exact keyboard hints, indexed workspace results, permission-safe AI response placeholder, and sync state.
 - **Interactive code block:** language/status header, high-contrast syntax palette, copy confirmation, horizontal scrolling, and a 520 px maximum height.
-- **Callout card:** semantic warning or architecture treatment, native `details/summary`, keyboard operation, expandable content, and distinct amber/indigo signals.
+- **Callout card:** semantic warning or architecture treatment, native `details/summary`, keyboard operation, expandable content, and distinct gold/indigo signals.
 - **Floating ToC:** sticky right rail, heading-depth indentation, scroll targets, section count, and reading-progress indicator.
 - **Process node card:** typed nodes, state-colored borders, directional connectors, compact metadata, and selectable dependency context.
 

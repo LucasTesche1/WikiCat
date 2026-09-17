@@ -14,16 +14,16 @@ const themeOptions: Array<{
   description: string;
   Icon: typeof Sun;
 }> = [
-  { id: 'light', label: 'Claro', description: 'Visual limpo e alto contraste', Icon: Sun },
-  { id: 'dark', label: 'Escuro', description: 'Menos fadiga visual em pouca luz', Icon: Moon },
-  { id: 'system', label: 'Sistema', description: 'Sincroniza com suas preferências', Icon: Monitor },
+  { id: 'light', label: 'Light', description: 'High-contrast light mode', Icon: Sun },
+  { id: 'dark', label: 'Dark', description: 'Reduced glare in low light', Icon: Moon },
+  { id: 'system', label: 'System', description: 'Use system preference', Icon: Monitor },
 ];
 
 export function ThemeCard({ currentTheme, onThemeSelect, className, ...props }: ThemeCardProps) {
   return (
     <div
       role="region"
-      aria-label="Preferências de tema"
+      aria-label="Theme preferences"
       className={cn(
         'w-64 rounded-xl border border-border bg-card p-3 text-card-foreground shadow-soft-lg',
         'backdrop-blur-none transition-shadow',
@@ -33,7 +33,7 @@ export function ThemeCard({ currentTheme, onThemeSelect, className, ...props }: 
     >
       <div className="mb-2.5 px-2 pt-1">
         <h4 className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-          Aparência do Workspace
+          Workspace appearance
         </h4>
       </div>
       <div className="space-y-1">

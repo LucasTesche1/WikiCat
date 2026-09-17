@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { BookOpen, Code2, GitBranch, ServerCog } from 'lucide-react';
+import { Code2, GitBranch } from 'lucide-react';
 import { LoginForm } from '../components/auth/LoginForm';
 import { useAuthStore } from '../store/useAuthStore';
+import { SystemLogo } from '../components/ui/SystemLogo';
 
 export default function LoginPage() {
   const user = useAuthStore((state) => state.user);
@@ -22,30 +23,27 @@ export default function LoginPage() {
         <div className="absolute inset-0 opacity-60" style={{ backgroundImage: 'linear-gradient(hsl(var(--border)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
         <div className="relative flex h-full flex-col">
           <header className="flex h-20 items-center gap-3 border-b border-border px-10">
-            <span className="grid h-11 w-11 place-items-center rounded-lg border border-primary/30 bg-primary/10 text-primary">
-              <ServerCog className="h-5 w-5" />
-            </span>
+            <SystemLogo className="h-11 w-11" />
             <div>
               <div className="font-semibold">WikiCat</div>
-              <div className="font-mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">Engineering Knowledge</div>
+              <div className="font-mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">Tool Console</div>
             </div>
           </header>
           <div className="flex flex-1 items-center px-12 xl:px-20">
             <div className="max-w-2xl">
-              <div className="mb-5 flex items-center gap-2 font-mono text-xs uppercase tracking-[.16em] text-primary">
-                <BookOpen className="h-4 w-4" />
-                Documentacao interna
+              <div className="mb-5 font-mono text-xs uppercase tracking-[.16em] text-primary">
+                Internal access
               </div>
               <h1 className="max-w-xl text-5xl font-semibold leading-tight xl:text-6xl">
-                O workspace tecnico da sua equipe.
+                Technical documentation workspace.
               </h1>
               <p className="mt-6 max-w-xl text-base leading-7 text-muted-foreground">
-                Runbooks, arquiteturas, decisoes e referencias em um ambiente pensado para leitura rapida, edicao segura e recuperacao por contexto.
+                Sign in to search, edit, and publish operational knowledge.
               </p>
               <div className="mt-10 grid max-w-xl grid-cols-2 gap-3">
                 {[
-                  [Code2, 'Markdown tecnico', 'Codigo, diagramas e chamadas operacionais.'],
-                  [GitBranch, 'Relacoes reais', 'Hierarquia e links internos sem telemetria inventada.'],
+                  [Code2, 'Markdown', 'Code, diagrams, and operational notes.'],
+                  [GitBranch, 'Relations', 'Hierarchy and internal document links.'],
                 ].map(([Icon, title, description]) => {
                   const I = Icon as typeof Code2;
                   return (
@@ -65,12 +63,10 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="mb-8 lg:hidden">
             <div className="flex items-center gap-3">
-              <span className="grid h-11 w-11 place-items-center rounded-lg border border-primary/30 bg-primary/10 text-primary">
-                <ServerCog className="h-5 w-5" />
-              </span>
+              <SystemLogo className="h-11 w-11" />
               <div>
                 <div className="font-semibold">WikiCat</div>
-                <div className="font-mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">Engineering Knowledge</div>
+                <div className="font-mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">Tool Console</div>
               </div>
             </div>
           </div>

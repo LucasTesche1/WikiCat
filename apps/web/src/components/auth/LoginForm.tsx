@@ -19,10 +19,10 @@ import {
 
 const schema = z.object({
   email: z
-    .string({ required_error: 'E-mail obrigatorio' })
-    .min(1, 'E-mail obrigatorio')
-    .email('Formato de e-mail invalido'),
-  password: z.string().min(1, 'Senha obrigatoria').max(256),
+    .string({ required_error: 'Email is required' })
+    .min(1, 'Email is required')
+    .email('Enter a valid email address'),
+  password: z.string().min(1, 'Password is required').max(256),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -59,7 +59,7 @@ export function LoginForm() {
       const msg =
         (e && typeof e === 'object' && 'message' in e && typeof (e as { message?: unknown }).message === 'string')
           ? (e as { message: string }).message
-          : 'Falha ao fazer login. Verifique suas credenciais.';
+          : 'Sign-in failed. Check your credentials.';
       setSubmitError(msg);
     }
   });
@@ -73,8 +73,8 @@ export function LoginForm() {
           <LogIn className="h-5 w-5" />
         </div>
         <div>
-          <CardTitle className="text-2xl">Acessar WikiCat</CardTitle>
-          <CardDescription>Entre com sua conta interna para continuar.</CardDescription>
+          <CardTitle className="text-2xl">Sign in</CardTitle>
+          <CardDescription>Use your internal account to continue.</CardDescription>
         </div>
       </CardHeader>
       <form onSubmit={onSubmit} noValidate>
@@ -86,12 +86,12 @@ export function LoginForm() {
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="email">E-mail</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
               autoComplete="email"
-              placeholder="nome@empresa.com"
+              placeholder="name@company.com"
               {...register('email')}
               aria-invalid={Boolean(errors.email)}
               aria-describedby={[errors.email ? 'email-error' : '', globalError ? 'login-error' : ''].filter(Boolean).join(' ') || undefined}
@@ -101,7 +101,7 @@ export function LoginForm() {
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
+            <Label htmlFor="password">Password</Label>
             <div className="relative">
               <Input
                 id="password"
@@ -116,7 +116,7 @@ export function LoginForm() {
                 type="button"
                 onClick={() => setShowPw((s) => !s)}
                 className="absolute right-1 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                aria-label={showPw ? 'Ocultar senha' : 'Mostrar senha'}
+                aria-label={showPw ? 'Hide password' : 'Show password'}
               >
                 {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -129,7 +129,7 @@ export function LoginForm() {
         <CardFooter className="px-7 pb-7">
           <Button className="w-full" type="submit" disabled={isLoading}>
             {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {isLoading ? 'Entrando...' : 'Entrar'}
+            {isLoading ? 'Signing in...' : 'Sign in'}
           </Button>
         </CardFooter>
       </form>

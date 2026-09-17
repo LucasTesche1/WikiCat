@@ -8,6 +8,7 @@ import type {
   PageTreeNode,
 } from '@wikicat/shared';
 import { pages, users, tags, pageTags, spaces, pageVersions } from '../../db/schema/index.js';
+import { httpError } from '../../lib/http-errors.js';
 
 export type PageRow = typeof pages.$inferSelect;
 
@@ -85,7 +86,7 @@ export async function generateUniqueSlug(
 ): Promise<string> {
   const baseSlug = slugify(baseTitle);
   if (!baseSlug) {
-    throw Object.assign(new Error('Não foi possível gerar slug a partir do título.'), { statusCode: 400 });
+    throw httpError(400, 'Could not generate a slug from the title.');
   }
   let candidate = baseSlug;
   let counter = 2;
@@ -99,7 +100,7 @@ export async function generateUniqueSlug(
         : baseSlug + suffix;
     counter++;
     if (counter > 999) {
-      throw Object.assign(new Error('Não foi possível gerar slug único. Tente outro título.'), { statusCode: 400 });
+      throw httpError(400, 'Could not generate a unique slug. Try another title.');
     }
   }
 }
@@ -111,21 +112,21 @@ export async function validateNoCycle(
 ): Promise<void> {
   if (newParentId == null) return;
   if (newParentId === pageId) {
-    throw Object.assign(new Error('Ciclo detectado: a página não pode ser filha de si mesma.'), { statusCode: 400 });
+    throw httpError(400, 'Cycle detected: the page cannot be its own child.');
   }
   let currentId: string | null = newParentId;
   const visited = new Set<string>();
   while (currentId != null) {
     if (visited.has(currentId)) {
-      throw Object.assign(new Error('Ciclo detectado: estrutura hierárquica inválida.'), { statusCode: 400 });
+      throw httpError(400, 'Cycle detected: invalid hierarchy.');
     }
     visited.add(currentId);
     if (currentId === pageId) {
-      throw Object.assign(new Error('Ciclo detectado: a página não pode ser movida para um de seus descendentes.'), { statusCode: 400 });
+      throw httpError(400, 'Cycle detected: the page cannot be moved under one of its descendants.');
     }
     const row = await findPageById(app, currentId);
     if (!row) {
-      throw Object.assign(new Error('Página pai não encontrada.'), { statusCode: 400 });
+      throw httpError(400, 'Parent page not found.');
     }
     currentId = row.parentPageId ?? null;
   }
@@ -214,8 +215,8 @@ export async function getPageWithRelations(
   return {
     ...p,
     tags: tagRows.map((r) => ({ id: r.id, name: r.name, color: r.color })),
-    createdByUser: creatorRows[0] ?? { id: p.createdBy, name: 'Usuário removido' },
-    updatedByUser: updaterRows[0] ?? { id: p.updatedBy, name: 'Usuário removido' },
+    createdByUser: creatorRows[0] ?? { id: p.createdBy, name: 'Removed user' },
+    updatedByUser: updaterRows[0] ?? { id: p.updatedBy, name: 'Removed user' },
   };
 }
 
@@ -241,7 +242,7 @@ export async function createPage(
   if (input.parentPageId != null) {
     const parent = await findPageById(app, input.parentPageId);
     if (!parent || parent.spaceId !== spaceId) {
-      throw Object.assign(new Error('Página pai não existe ou pertence a outro espaço.'), { statusCode: 400 });
+      throw httpError(400, 'Parent page does not exist or belongs to another space.');
     }
   }
   let orderIndex = input.orderIndex;
@@ -274,9 +275,9 @@ export async function updatePage(
 ): Promise<Page> {
   return app.db.transaction(async tx => {
     const [current] = await tx.select().from(pages).where(and(eq(pages.id, id), isNull(pages.deletedAt))).for('update');
-    if (!current) throw Object.assign(new Error('Página não encontrada.'), { statusCode: 404 });
+    if (!current) throw httpError(404, 'Page not found.');
     if (input.expectedUpdatedAt && new Date(input.expectedUpdatedAt).getTime() !== current.updatedAt.getTime()) {
-      throw Object.assign(new Error('Esta página foi alterada por outra sessão. Copie seu rascunho e recarregue para comparar antes de salvar.'), { statusCode: 409 });
+      throw httpError(409, 'This page was changed by another session. Copy your draft and reload to compare before saving.');
     }
     const scoped = Object.create(app) as FastifyInstance;
     scoped.db = tx as unknown as FastifyInstance['db'];
@@ -298,7 +299,7 @@ async function updatePageUnlocked(
 ): Promise<Page> {
   const current = await findPageById(app, id);
   if (!current) {
-    throw Object.assign(new Error('Página não encontrada.'), { statusCode: 404 });
+    throw httpError(404, 'Page not found.');
   }
   const newParentId = input.parentPageId !== undefined ? input.parentPageId : current.parentPageId;
   if (newParentId !== current.parentPageId) {
@@ -306,7 +307,7 @@ async function updatePageUnlocked(
     if (newParentId != null) {
       const parent = await findPageById(app, newParentId);
       if (!parent || parent.spaceId !== current.spaceId) {
-        throw Object.assign(new Error('Página pai não existe ou pertence a outro espaço.'), { statusCode: 400 });
+        throw httpError(400, 'Parent page does not exist or belongs to another space.');
       }
     }
   }

@@ -5,13 +5,13 @@
   --muted: 210 40% 96%; --muted-foreground: 215 25% 27%;
   --accent: 210 40% 96%; --accent-foreground: 222 47% 11%;
   --border: 214 32% 86%; --input: 215 16% 47%;
-  --primary: 45 96% 45%; --primary-foreground: 222 47% 8%;
+  --primary: 48 100% 50%; --primary-foreground: 222 47% 8%;
   --secondary: 245 58% 41%; --secondary-foreground: 0 0% 100%;
   --destructive: 0 70% 35%; --destructive-foreground: 0 0% 100%;
   --ring: 245 58% 41%; --brand-teal: 164 88% 20%; --brand-purple: 245 58% 41%;
-  --brand-pink: 263 69% 42%; --brand-amber: 22 78% 26%;
+  --brand-pink: 263 69% 42%; --brand-amber: 48 100% 50%;
   --sidebar: 0 0% 100%; --sidebar-foreground: 222 47% 11%;
-  --wk-code-string: #065f46; --wk-code-keyword: #5b21b6; --wk-code-number: #78350f;
+  --wk-code-string: #065f46; --wk-code-keyword: #5b21b6; --wk-code-number: #806600;
   --wk-code-title: #3730a3; --reader-width: 68ch; --reader-size: 16px;
 }
 .dark {
@@ -21,14 +21,14 @@
   --muted: 216 34% 14%; --muted-foreground: 214 32% 84%;
   --accent: 216 34% 14%; --accent-foreground: 210 40% 98%;
   --border: 215 25% 27%; --input: 215 20% 65%;
-  --primary: 48 96% 53%; --primary-foreground: 218 38% 6%;
+  --primary: 48 100% 50%; --primary-foreground: 218 38% 6%;
   --secondary: 226 100% 89%; --secondary-foreground: 218 38% 6%;
   --destructive: 0 96% 89%; --destructive-foreground: 218 38% 6%;
   --ring: 226 100% 89%; --brand-teal: 156 72% 67%; --brand-purple: 226 100% 89%;
-  --brand-pink: 252 95% 92%; --brand-amber: 48 97% 77%;
+  --brand-pink: 252 95% 92%; --brand-amber: 48 100% 50%;
   --sidebar: 217 36% 10%; --sidebar-foreground: 210 40% 98%;
   --wk-code-string: #6ee7b7; --wk-code-keyword: #ddd6fe;
-  --wk-code-number: #fde68a; --wk-code-title: #c7d2fe;
+  --wk-code-number: #ffcc00; --wk-code-title: #c7d2fe;
 }
 body { background-image: none; }
 html { scroll-behavior: auto; }
@@ -89,6 +89,32 @@ button:disabled { cursor: not-allowed; }
 .code-panel { margin: 28px 0; border: 1px solid hsl(var(--input)); border-radius: 16px; overflow: hidden; background: linear-gradient(180deg, hsl(var(--background)), hsl(var(--muted) / .55)); box-shadow: 0 18px 54px -42px rgb(0 0 0 / .7); }
 .code-panel header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid hsl(var(--border)); font-size: 14px; background: hsl(var(--muted) / .72); }
 .code-panel pre { margin: 0; }
+.wikicat-editor-toolbar-sentinel { height: 1px; margin-top: -1px; }
+.wikicat-editor-toolbar-slot { min-height: 49px; border-bottom: 1px solid hsl(var(--border)); background: hsl(var(--muted) / .4); }
+.wikicat-editor-toolbar { border-bottom: 0; width: 100%; transform-origin: top left; transition: width 220ms cubic-bezier(0.16, 1, 0.3, 1), max-height 220ms cubic-bezier(0.16, 1, 0.3, 1), border-radius 220ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1), background-color 220ms ease, transform 220ms cubic-bezier(0.16, 1, 0.3, 1); will-change: transform, width; }
+.wikicat-editor-toolbar--docked {
+  position: fixed;
+  top: 96px;
+  left: var(--editor-toolbar-left, 288px);
+  z-index: 45;
+  width: 56px;
+  max-height: calc(100dvh - 120px);
+  overflow-y: auto;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: center;
+  padding: 8px 6px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 14px;
+  background: hsl(var(--card) / .96);
+  box-shadow: 0 22px 70px -34px rgb(0 0 0 / .65);
+  backdrop-filter: blur(14px);
+}
+.wikicat-editor-toolbar--docked .ml-auto { margin-left: 0; flex-direction: column; padding-right: 0; }
+.wikicat-editor-toolbar--docked [role=separator],
+.wikicat-editor-toolbar--docked .w-px { width: 28px; height: 1px; margin: 4px 0; }
+.wikicat-editor-toolbar--docked button { width: 40px; min-width: 40px; justify-content: center; padding-inline: 0; }
+.wikicat-editor-toolbar--docked button span { display: none; }
 .wikicat-editor-surface .ProseMirror { outline: none; min-height: 440px; max-width: 78ch; margin-inline: auto; padding: clamp(22px,3vw,38px); color: hsl(var(--foreground)); font-size: 17px; line-height: 1.82; caret-color: hsl(var(--primary)); }
 .wikicat-editor-surface .ProseMirror p { color: hsl(var(--foreground) / .94); margin: .9rem 0; }
 .wikicat-editor-surface .ProseMirror h1 { margin: 2.2rem 0 1rem; font-size: clamp(2.15rem,4vw,3.2rem); line-height: 1.08; font-weight: 780; letter-spacing: -.045em; color: hsl(var(--foreground)); }
@@ -121,6 +147,7 @@ button:disabled { cursor: not-allowed; }
 .read-progress { height: 3px; background: hsl(var(--border)); overflow: hidden; }
 .read-progress > div { height: 100%; background: hsl(var(--primary)); }
 @media(max-width:1279px) { .reader-grid { grid-template-columns: minmax(0,1fr); } .toc-panel { position: static; max-height: none; } .reader-content { grid-row: 2; } }
+@media(max-width:1023px) { .wikicat-editor-toolbar--docked { position: sticky; top: 0; left: auto; width: 100%; max-height: none; flex-direction: row; flex-wrap: wrap; align-items: center; padding: 8px; border: 0; border-radius: 0; box-shadow: none; backdrop-filter: none; } .wikicat-editor-toolbar--docked .ml-auto { margin-left: auto; flex-direction: row; padding-right: .25rem; } }
 @media(max-width:1023px) { .workspace { grid-template-columns: minmax(0,1fr); } .workspace > .workspace-nav { display:none; } .workspace-header { padding:12px 16px; gap:8px; } .workspace-main { padding:24px 16px; } .workspace-grid { grid-template-columns:minmax(0,1fr); } }
 @media(max-width:639px) { .reader-content { padding:20px 16px; } .workspace-main { padding:20px 12px; } }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; } }

@@ -18,6 +18,9 @@ import type {
   TaggedPage,
   WorkspaceSearchResponse,
   DocumentVersion,
+  DocumentTemplate,
+  CreateTemplateRequest,
+  UpdateTemplateRequest,
 } from '@wikicat/shared';
 
 export class ApiError extends Error {
@@ -117,6 +120,12 @@ export const api = {
       remove: (id: string, tagName: string) =>
         request<void>('DELETE', `/pages/${encodeURIComponent(id)}/tags/${encodeURIComponent(tagName)}`),
     },
+  },
+  templates: {
+    list: (signal?: AbortSignal) => request<DocumentTemplate[]>('GET', '/templates', { signal }),
+    create: (body: CreateTemplateRequest) => request<DocumentTemplate>('POST', '/templates', { body }),
+    update: (id: string, body: UpdateTemplateRequest) => request<DocumentTemplate>('PATCH', `/templates/${encodeURIComponent(id)}`, { body }),
+    delete: (id: string) => request<void>('DELETE', `/templates/${encodeURIComponent(id)}`),
   },
   attachments: {
     uploadStandard: (pageId: string, file: File, signal?: AbortSignal) => {

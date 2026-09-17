@@ -28,10 +28,10 @@ const QueryTagSearch = Type.Object({
 export async function registerTags(app: FastifyInstance) {
   app.get<{ Params: { id: string } }>(
     '/pages/:id/tags',
-    { onRequest: requireAuth() },
+    {},
     async (request, reply) => {
       const page = await findPageById(app, request.params.id);
-      if (!page) return reply.code(404).send({ error: 'Not Found', message: 'Página não encontrada.' });
+      if (!page) return reply.code(404).send({ error: 'Not Found', message: 'Page not found.' });
       const tags = await listTagsForPage(app, request.params.id);
       return reply.code(200).send(tags);
     },
@@ -45,7 +45,7 @@ export async function registerTags(app: FastifyInstance) {
     },
     async (request, reply) => {
       const page = await findPageById(app, request.params.id);
-      if (!page) return reply.code(404).send({ error: 'Not Found', message: 'Página não encontrada.' });
+      if (!page) return reply.code(404).send({ error: 'Not Found', message: 'Page not found.' });
       const user = request.currentUser!;
       const body = request.body as AddTagRequest;
       const tag = await getOrCreateTagInSpace(app, page.spaceId, body, user.id);
@@ -65,17 +65,17 @@ export async function registerTags(app: FastifyInstance) {
 
   app.get<{ Params: { slug: string }; Querystring: Static<typeof QueryTagSearch> }>(
     '/spaces/:slug/tags',
-    { onRequest: requireAuth(), schema: { querystring: QueryTagSearch } },
+    { schema: { querystring: QueryTagSearch } },
     async (request, reply) => {
       const space = await findSpaceBySlug(app, request.params.slug);
-      if (!space) return reply.code(404).send({ error: 'Not Found', message: 'Espaço não encontrado.' });
+      if (!space) return reply.code(404).send({ error: 'Not Found', message: 'Space not found.' });
       return reply.code(200).send(await listTagsForSpace(app, space.id, request.query.q ?? null));
     },
   );
 
   app.get<{ Params: { slug: string; tagName: string } }>(
     '/spaces/:slug/tags/:tagName/pages',
-    { onRequest: requireAuth() },
+    {},
     async (request, reply) => {
       const list = await listPagesByTagInSpace(
         app,

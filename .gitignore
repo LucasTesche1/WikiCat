@@ -1,6 +1,8 @@
 node_modules
 .pnpm-store
+.pnpm-state
 dist
+dist-node
 build
 coverage
 *.log
@@ -10,3 +12,6 @@ coverage
 .vscode
 .idea
 *.tsbuildinfo
+.ui-backup-*
+apps/web/$null
+package-lock.json
