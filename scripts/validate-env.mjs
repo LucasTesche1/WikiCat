@@ -50,11 +50,24 @@ const badNumbers = numeric.filter((key) => {
   return value != null && (!Number.isFinite(Number(value)) || Number(value) <= 0);
 });
 
-if (missing.length || tooShort.length || badUrls.length || badNumbers.length) {
+const railwayLike = envFile.includes('railway');
+const localProductionDb = (() => {
+  if (!railwayLike) return false;
+  const value = process.env.DATABASE_URL;
+  if (!value || value.includes('${{')) return false;
+  try {
+    return ['localhost', '127.0.0.1', '::1'].includes(new URL(value).hostname);
+  } catch {
+    return false;
+  }
+})();
+
+if (missing.length || tooShort.length || badUrls.length || badNumbers.length || localProductionDb) {
   if (missing.length) console.error(`[env] Missing/placeholder: ${missing.join(', ')}`);
   if (tooShort.length) console.error(`[env] Too short: ${tooShort.join(', ')}`);
   if (badUrls.length) console.error(`[env] Invalid URL: ${badUrls.join(', ')}`);
   if (badNumbers.length) console.error(`[env] Invalid number: ${badNumbers.join(', ')}`);
+  if (localProductionDb) console.error('[env] Railway DATABASE_URL must not point to localhost.');
   process.exit(1);
 }
 

@@ -17,7 +17,7 @@ resolve_database_url() {
     return 1
   fi
 
-  node --input-type=module -e "const url = new URL(process.env.DATABASE_URL); console.log(\`[wikicat:entrypoint] Database target: \${url.protocol}//\${url.hostname}:\${url.port || '5432'}\${url.pathname}\`);"
+  node --input-type=module -e "const url = new URL(process.env.DATABASE_URL); console.log(\`[wikicat:entrypoint] Database target: \${url.protocol}//\${url.hostname}:\${url.port || '5432'}\${url.pathname}\`); if (process.env.NODE_ENV === 'production' && ['localhost', '127.0.0.1', '::1'].includes(url.hostname)) { console.error('[wikicat:entrypoint] Invalid production DATABASE_URL: localhost points to the app container, not Railway Postgres. Use Railway Postgres connection variables, preferably DATABASE_PRIVATE_URL.'); process.exit(1); }"
 }
 
 wait_for_database() {
