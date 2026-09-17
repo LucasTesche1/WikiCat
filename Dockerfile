@@ -23,8 +23,7 @@ COPY packages/shared/package.json ./packages/shared/package.json
 COPY apps/api/package.json ./apps/api/package.json
 COPY apps/web/package.json ./apps/web/package.json
 WORKDIR /app
-RUN --mount=type=cache,id=cacheKey-pnpm-store,target=/root/.local/share/pnpm/store,sharing=locked \
-    set -eux; \
+RUN set -eux; \
     rm -f .npmrc; \
     printf "package-manager-strict=false\nnode-linker=hoisted\n" > .npmrc; \
     pnpm install --ignore-scripts --frozen-lockfile
@@ -34,8 +33,7 @@ FROM installer-dev AS installer-prod
 ENV PNPM_HOME=/pnpm
 ENV PNPM_STORE_DIR=/root/.local/share/pnpm/store
 ENV PATH=/pnpm:$PATH
-RUN --mount=type=cache,id=cacheKey-pnpm-store,target=/root/.local/share/pnpm/store,sharing=locked \
-    set -eux; \
+RUN set -eux; \
     rm -f .npmrc; \
     printf "package-manager-strict=false\nnode-linker=hoisted\n" > .npmrc; \
     CI=true pnpm install --prod --ignore-scripts --frozen-lockfile
@@ -48,8 +46,7 @@ ENV PNPM_STORE_DIR=/root/.local/share/pnpm/store
 ENV PATH=/pnpm:$PATH
 COPY . .
 WORKDIR /app
-RUN --mount=type=cache,id=cacheKey-pnpm-store,target=/root/.local/share/pnpm/store,sharing=locked \
-    set -eux; \
+RUN set -eux; \
     rm -f .npmrc; \
     printf "package-manager-strict=false\nnode-linker=hoisted\n" > .npmrc; \
     CI=true pnpm install --ignore-scripts --frozen-lockfile; \
