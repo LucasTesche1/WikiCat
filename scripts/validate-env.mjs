@@ -24,13 +24,15 @@ const fileEnv = Object.fromEntries(
 Object.assign(process.env, fileEnv);
 
 const required = ['DATABASE_URL', 'JWT_SECRET', 'COOKIE_SECRET'];
-const missing = required.filter((key) => !process.env[key] || process.env[key]?.startsWith('replace-with'));
+const placeholderPatterns = [/^replace-with/i, /USER:PASSWORD@HOST/i, /your-app-domain/i];
+const isPlaceholder = (value = '') => placeholderPatterns.some((pattern) => pattern.test(value));
+const missing = required.filter((key) => !process.env[key] || isPlaceholder(process.env[key]));
 const tooShort = ['JWT_SECRET', 'COOKIE_SECRET'].filter((key) => (process.env[key]?.length ?? 0) < 32);
 
 const mustBeUrl = ['DATABASE_URL', 'PUBLIC_BASE_URL'];
 const badUrls = mustBeUrl.filter((key) => {
   const value = process.env[key];
-  if (!value || value.includes('${{')) return false;
+  if (!value || isPlaceholder(value)) return false;
   try {
     new URL(value);
     return false;
@@ -54,7 +56,7 @@ const railwayLike = envFile.includes('railway');
 const localProductionDb = (() => {
   if (!railwayLike) return false;
   const value = process.env.DATABASE_URL;
-  if (!value || value.includes('${{')) return false;
+  if (!value || isPlaceholder(value)) return false;
   try {
     return ['localhost', '127.0.0.1', '::1'].includes(new URL(value).hostname);
   } catch {

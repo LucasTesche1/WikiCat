@@ -10,9 +10,27 @@
     Content-Security-Policy "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self' data:; frame-ancestors 'self'; base-uri 'self'; form-action 'self';"
   }
 
-  reverse_proxy http://{$WIKICAT_APP_HOST}:{$WIKICAT_APP_PORT} {
-    transport http {
-      versions 1.1 2
+  handle /api/* {
+    reverse_proxy http://{$WIKICAT_API_HOST}:{$WIKICAT_API_PORT} {
+      transport http {
+        versions 1.1 2
+      }
+    }
+  }
+
+  handle /health {
+    reverse_proxy http://{$WIKICAT_API_HOST}:{$WIKICAT_API_PORT} {
+      transport http {
+        versions 1.1 2
+      }
+    }
+  }
+
+  handle {
+    reverse_proxy http://{$WIKICAT_WEB_HOST}:{$WIKICAT_WEB_PORT} {
+      transport http {
+        versions 1.1 2
+      }
     }
   }
 }

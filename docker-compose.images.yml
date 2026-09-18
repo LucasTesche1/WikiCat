@@ -3,11 +3,7 @@ name: wikicat
 
 services:
   db:
-    build:
-      context: ./db
-      dockerfile: Dockerfile
-    image: wikicat-db:local
-    container_name: wikicat-db
+    image: ${WIKICAT_DB_IMAGE:-wikicat-db:local}
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-wikicat}
@@ -22,17 +18,11 @@ services:
       timeout: 5s
       retries: 10
       start_period: 20s
-    ports:
-      - "${DB_PORT:-5432}:5432"
     networks:
       - wikicat-net
 
   back-end:
-    build:
-      context: ./back-end
-      dockerfile: Dockerfile
-    image: wikicat-back-end:local
-    container_name: wikicat-back-end
+    image: ${WIKICAT_BACK_END_IMAGE:-wikicat-back-end:local}
     restart: unless-stopped
     depends_on:
       db:
@@ -61,32 +51,20 @@ services:
     volumes:
       - wikicat-attachments:/attachments
       - wikicat-attachments-large:/attachments-large
-    expose:
-      - "3000"
     networks:
       - wikicat-net
 
   front-end:
-    build:
-      context: ./front-end
-      dockerfile: Dockerfile
-    image: wikicat-front-end:local
-    container_name: wikicat-front-end
+    image: ${WIKICAT_FRONT_END_IMAGE:-wikicat-front-end:local}
     restart: unless-stopped
     depends_on:
       back-end:
         condition: service_healthy
-    expose:
-      - "8080"
     networks:
       - wikicat-net
 
   proxy:
-    build:
-      context: ./proxy
-      dockerfile: Dockerfile
-    image: wikicat-proxy:local
-    container_name: wikicat-proxy
+    image: ${WIKICAT_PROXY_IMAGE:-wikicat-proxy:local}
     restart: unless-stopped
     depends_on:
       back-end:
